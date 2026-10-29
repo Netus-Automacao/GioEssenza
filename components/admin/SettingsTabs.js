@@ -1,0 +1,196 @@
+"use client";
+import { useEffect, useState } from "react";
+import Catalog from "@/components/Catalog";
+import { DAYS, contrast } from "@/lib/data";
+import { Toggle, Field, ColorField, ImagePicker, Card } from "./ui";
+
+const SAMPLE = [
+  { id: "a", name: "Agenda personalizada", price: 105, promo_price: 89, featured: true, photos: [], active: true },
+  { id: "b", name: "Caderneta de vacinação", price: 65, photos: [], active: true },
+  { id: "c", name: "Planner vertical", price: 87, photos: [], active: true },
+  { id: "d", name: "Bloco de anotações", price: 27, photos: [], active: true },
+];
+
+function Preview({ s, prods, cats }) {
+  return (
+    <div className="ad-preview">
+      <div className="ad-phone"><div className="ad-phone-screen">
+        <Catalog settings={{ ...s, active: true }} categories={cats} products={prods?.some((p) => p.active) ? prods : SAMPLE} preview />
+      </div></div>
+      <p>Prévia no celular — atualiza enquanto você edita.</p>
+    </div>
+  );
+}
+
+const useOrigin = () => { const [o, setO] = useState(""); useEffect(() => setO(window.location.origin), []); return o; };
+
+export function TabGeral({ s, set, save, prods, setToast }) {
+  const origin = useOrigin();
+  const url = s.public_url || origin;
+  const activeCount = prods.filter((p) => p.active).length;
+  return (
+    <>
+      <h1 className="ad-h1">Geral</h1>
+      <Card title="Situação do catálogo" desc="Quando desativado, os clientes veem uma mensagem de catálogo temporariamente indisponível.">
+        <Toggle label={s.active ? "Catálogo ativo" : "Catálogo desativado"} hint={s.active ? "Qualquer pessoa com o link vê seus produtos." : "Ninguém consegue ver os produtos agora."}
+          checked={s.active} onChange={(v) => save({ ...s, active: v })} />
+      </Card>
+      <Card title="Resumo">
+        <dl className="ad-summary">
+          <div><dt>Loja</dt><dd>{s.name}</dd></div>
+          <div><dt>Situação</dt><dd><span className={`ad-pill ${s.active ? "on" : ""}`}>{s.active ? "Ativo" : "Inativo"}</span></dd></div>
+          <div><dt>Produtos</dt><dd>{activeCount} ativos de {prods.length} cadastrados</dd></div>
+          <div><dt>Endereço</dt><dd className="ad-url">{url}</dd></div>
+        </dl>
+        <div className="ad-row">
+          <a className="ad-btn" href="/" target="_blank" rel="noreferrer">Abrir catálogo</a>
+          <button className="ad-btn ghost" onClick={async () => { await navigator.clipboard.writeText(url); setToast("Endereço copiado"); }}>Copiar endereço</button>
+        </div>
+      </Card>
+    </>
+  );
+}
+
+export function TabIdentidade({ s, set, setToast, prods, cats }) {
+  const origin = useOrigin();
+  const digits = s.whatsapp.replace(/\D/g, "");
+  return (
+    <div className="ad-split">
+      <div>
+        <h1 className="ad-h1">Identidade da loja</h1>
+        <Card title="Logotipo" desc="Imagens quadradas ficam melhores.">
+          <ImagePicker value={s.logo} onChange={(logo) => set({ logo })} label="Enviar logotipo" square />
+        </Card>
+        <Card title="Informações">
+          <div className="ad-grid2">
+            <Field label="Nome da loja"><input value={s.name} onChange={(e) => set({ name: e.target.value })} maxLength={60} /></Field>
+            <Field label="Slogan"><input value={s.slogan} onChange={(e) => set({ slogan: e.target.value })} maxLength={80} /></Field>
+          </div>
+          <Field label="WhatsApp para pedidos" hint={digits.length < 12 ? "Inclua o código do país e o DDD. Exemplo: 5541987152125." : `Os pedidos vão para +${digits}.`}>
+            <input inputMode="tel" value={s.whatsapp} onChange={(e) => set({ whatsapp: e.target.value.replace(/[^\d+ ()-]/g, "") })} />
+          </Field>
+          <Field label={`Descrição da loja (${s.description.length}/500)`} hint="Aparece logo abaixo do nome, no topo do catálogo.">
+            <textarea rows={4} maxLength={500} value={s.description} onChange={(e) => set({ description: e.target.value })} />
+          </Field>
+        </Card>
+        <Card title="Botões do WhatsApp" desc="Botão de contato na página inicial e botão de pedido em cada produto.">
+          <Toggle label="Mostrar botões do WhatsApp" checked={s.whatsapp_enabled} onChange={(v) => set({ whatsapp_enabled: v })} />
+        </Card>
+        <Card title="Endereço do catálogo" desc="O endereço usado ao copiar e compartilhar o catálogo.">
+          <Field label="Endereço público" hint={`Deixe vazio para usar o endereço atual (${origin}). Para um domínio próprio, como gioessenza.com.br, registre o domínio e adicione-o ao projeto na Vercel; depois cole-o aqui.`}>
+            <input type="url" placeholder={origin} value={s.public_url} onChange={(e) => set({ public_url: e.target.value.trim() })} />
+          </Field>
+          <button className="ad-btn ghost" onClick={async () => { await navigator.clipboard.writeText(s.public_url || origin); setToast("Endereço copiado"); }}>Copiar endereço</button>
+        </Card>
+      </div>
+      <Preview s={s} prods={prods} cats={cats} />
+    </div>
+  );
+}
+
+export function TabBanner({ s, set, prods, cats }) {
+  const b = s.banner;
+  const setB = (patch) => set({ banner: { ...b, ...patch } });
+  return (
+    <div className="ad-split">
+      <div>
+        <h1 className="ad-h1">Banner de destaque</h1>
+        <Card title="Exibição">
+          <Toggle label="Mostrar banner" hint="Sem banner, o topo usa um degradê da cor principal com a cor de destaque." checked={b.enabled} onChange={(v) => setB({ enabled: v })} />
+        </Card>
+        {b.enabled && (
+          <Card title="Fundo">
+            <div className="ad-seg" role="radiogroup">
+              <button className={b.type === "color" ? "on" : ""} onClick={() => setB({ type: "color" })}>Cor sólida</button>
+              <button className={b.type === "image" ? "on" : ""} onClick={() => setB({ type: "image" })}>Imagem</button>
+            </div>
+            {b.type === "color" ? <ColorField label="Cor de fundo" value={b.color} onChange={(color) => setB({ color })} />
+              : <ImagePicker value={b.image} onChange={(image) => setB({ image })} label="Enviar imagem do banner" />}
+            {b.type === "image" && <p className="ad-note">Use uma imagem horizontal (ex.: 1600 × 600 px). Ela é recortada no centro para caber no celular e no computador.</p>}
+          </Card>
+        )}
+        {b.enabled && (
+          <Card title="Textos" desc="Os dois campos são opcionais.">
+            <Field label="Título principal"><input value={b.title} onChange={(e) => setB({ title: e.target.value })} maxLength={90} /></Field>
+            <Field label="Subtítulo"><input value={b.subtitle} placeholder="Ex.: Encomendas de Natal abertas" onChange={(e) => setB({ subtitle: e.target.value })} maxLength={120} /></Field>
+          </Card>
+        )}
+      </div>
+      <Preview s={s} prods={prods} cats={cats} />
+    </div>
+  );
+}
+
+export function TabCores({ s, set, prods, cats }) {
+  const c = s.colors;
+  const setC = (patch) => set({ colors: { ...c, ...patch } });
+  const r = contrast(c.text, c.background);
+  return (
+    <div className="ad-split">
+      <div>
+        <h1 className="ad-h1">Cores</h1>
+        <Card title="Cores do catálogo" desc="Escolha no seletor ou digite o código hexadecimal (#55663C) ou RGB (85, 102, 60).">
+          <div className="ad-grid2">
+            <ColorField label="Cor principal" hint="Botões, preços, categorias e navegação." value={c.primary} onChange={(primary) => setC({ primary })} />
+            <ColorField label="Cor de destaque" hint="Degradê da capa e elementos de destaque." value={c.accent} onChange={(accent) => setC({ accent })} />
+            <ColorField label="Cor de fundo" hint="Fundo das páginas e seções." value={c.background} onChange={(background) => setC({ background })} />
+            <ColorField label="Cor do texto" hint="Títulos, descrições e bordas." value={c.text} onChange={(text) => setC({ text })} />
+          </div>
+          <div className="ad-gradient" style={{ background: `linear-gradient(120deg, ${c.primary}, ${c.accent})` }}><span>Degradê principal + destaque</span></div>
+          <p className={`ad-note${r < 4.5 ? " warn" : ""}`}>
+            Contraste entre texto e fundo: {r.toFixed(1)}:1 — {r >= 7 ? "excelente" : r >= 4.5 ? "boa leitura" : "baixo; escolha um texto mais escuro ou um fundo mais claro"}.
+          </p>
+        </Card>
+      </div>
+      <Preview s={s} prods={prods} cats={cats} />
+    </div>
+  );
+}
+
+export function TabHorarios({ s, set }) {
+  const h = s.hours;
+  const setDay = (i, patch) => set({ hours: { ...h, days: h.days.map((d, j) => (j === i ? { ...d, ...patch } : d)) } });
+  return (
+    <>
+      <h1 className="ad-h1">Horário de funcionamento</h1>
+      <Card title="Exibição">
+        <Toggle label="Mostrar horários no catálogo" hint="Mostra a tabela de horários e o aviso “Aberto agora / Fechado agora”." checked={h.show} onChange={(v) => set({ hours: { ...h, show: v } })} />
+      </Card>
+      <Card title="Dias da semana">
+        <div className="ad-days">
+          {h.days.map((d, i) => (
+            <div key={i} className={`ad-day${d.open ? "" : " off"}`}>
+              <label className="ad-check"><input type="checkbox" checked={d.open} onChange={(e) => setDay(i, { open: e.target.checked })} /> {DAYS[i]}</label>
+              <input type="time" value={d.start} disabled={!d.open} onChange={(e) => setDay(i, { start: e.target.value })} aria-label={`Abre ${DAYS[i]}`} />
+              <span>às</span>
+              <input type="time" value={d.end} disabled={!d.open} onChange={(e) => setDay(i, { end: e.target.value })} aria-label={`Fecha ${DAYS[i]}`} />
+              {!d.open && <em>Fechado</em>}
+              {d.open && d.end <= d.start && <em className="ad-err">O horário final precisa ser depois do inicial.</em>}
+            </div>
+          ))}
+        </div>
+      </Card>
+    </>
+  );
+}
+
+export function TabEntrega({ s, set }) {
+  const d = s.delivery;
+  const setD = (patch) => set({ delivery: { ...d, ...patch } });
+  return (
+    <>
+      <h1 className="ad-h1">Entrega e retirada</h1>
+      <Card title="Modalidades" desc="Só as modalidades ativadas aparecem no catálogo.">
+        <Toggle label="Entrega por aplicativo, solicitado pelo cliente." hint="O cliente chama Uber ou outro app e paga a corrida. Não aparece como entrega feita pela loja."
+          checked={d.app} onChange={(v) => setD({ app: v })} />
+        <Toggle label="Retirada pelo cliente." hint="O cliente retira pessoalmente ou chama um app para buscar o pedido; transporte por conta dele."
+          checked={d.pickup} onChange={(v) => setD({ pickup: v })} />
+        {d.pickup && (
+          <Field label="Observação sobre a retirada" hint="Opcional. Aparece junto da modalidade.">
+            <input value={d.pickup_note} onChange={(e) => setD({ pickup_note: e.target.value })} maxLength={160} />
+          </Field>
+        )}
+      </Card>
+    </>
+  );
+}
