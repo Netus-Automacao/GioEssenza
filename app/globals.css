@@ -474,3 +474,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 .important.prazo{background:color-mix(in srgb,var(--primary) 8%,var(--bg))}
 .important .hint{margin:.35rem 0 0;font-size:.82rem}
 @media(min-width:1000px){.info{grid-template-columns:1fr 1fr 1fr}}
+/* v4.3: logo um nível maior; banner desligado sem faixa */
+.cat{--logo:185px}
+.hero.no-band .hero-band{background:none;color:var(--text);padding-bottom:.4rem}
+.ad-savebar{background:#8A4B1F}

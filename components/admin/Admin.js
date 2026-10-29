@@ -63,6 +63,11 @@ function Dashboard({ initialTab }) {
   useEffect(() => { load(); }, []);
   useEffect(() => { if (toast) { const t = setTimeout(() => setToast(""), 2600); return () => clearTimeout(t); } }, [toast]);
 
+  useEffect(() => {
+    const warn = (e) => { if (saved && draft && JSON.stringify(saved) !== JSON.stringify(draft)) { e.preventDefault(); e.returnValue = ""; } };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [saved, draft]);
   if (!draft) return <div className="ad-loading">Carregando…</div>;
   const dirty = JSON.stringify(saved) !== JSON.stringify(draft);
   const set = (patch) => setDraft((d) => ({ ...d, ...patch }));
@@ -102,7 +107,7 @@ function Dashboard({ initialTab }) {
         {tab === "produtos" && <Products key={newProduct} startNew={newProduct > 0} settings={saved} cats={cats} prods={prods} setProds={setProds} setToast={setToast} setTab={setTab} />}
         {isSettings && (dirty || saving) && (
           <div className="ad-savebar">
-            <span>Há alterações não salvas.</span>
+            <span>⚠️ Alterações ainda não aparecem no site. Toque em salvar.</span>
             <button className="ad-btn ghost" onClick={() => setDraft(saved)} disabled={saving}>Descartar</button>
             <button className="ad-btn" onClick={() => save()} disabled={saving}>{saving ? "Salvando…" : "Salvar alterações"}</button>
           </div>

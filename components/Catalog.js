@@ -24,8 +24,8 @@ export function Hero({ s }) {
   const band = !b.enabled ? { background: "linear-gradient(120deg, var(--primary), var(--accent))" } : img ? { backgroundImage: `url(${b.image})` } : { background: b.color };
   const text = b.enabled && (b.title || b.subtitle);
   return (
-    <header className={`hero${img ? " is-img" : ""}`}>
-      <div className="hero-band" style={band}>
+    <header className={`hero${img ? " is-img" : ""}${b.enabled ? "" : " no-band"}`}>
+      <div className="hero-band" style={b.enabled ? band : undefined}>
         <div className="hero-logo">{s.logo ? <img src={s.logo} alt={`Logo ${s.name}`} /> : <span>{s.name}</span>}</div>
         {text && (
           <div className="hero-text">
