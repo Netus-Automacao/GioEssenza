@@ -216,7 +216,6 @@ export default function ProductView({ settings: s, product: p, categoryName, pre
           {added && <p className="ok">Adicionado ao carrinho. <Link href="/carrinho">Ver carrinho</Link> ou continue escolhendo.</p>}
 
           {filled(p.specs?.prazo) && <div className="important prazo"><strong>Prazo de confecção</strong><p>{p.specs.prazo}</p><p className="hint">{PRAZO_NOTE}</p></div>}
-          {importantText(p) && <div className="important"><strong>Importante</strong><p>{importantText(p)}</p></div>}
           {p.description && <div className="pdesc">{p.description.split("\n").map((l, i) => <p key={i}>{l}</p>)}</div>}
           {specs.length > 0 && (
             <dl className="specs">
@@ -225,6 +224,7 @@ export default function ProductView({ settings: s, product: p, categoryName, pre
               ))}
             </dl>
           )}
+          {importantText(p) && <div className="important"><strong>Importante</strong><p>{importantText(p)}</p></div>}
         </div>
       </article>
     </main>
