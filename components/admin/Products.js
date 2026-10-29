@@ -1,7 +1,7 @@
 "use client";
 import { useRef, useState } from "react";
 import { supabase, uploadImage } from "@/lib/supabase";
-import { brl, hasPromo, saleBadge } from "@/lib/data";
+import { brl, hasPromo, saleBadge, DEFAULT_IMPORTANT } from "@/lib/data";
 import ProductView from "@/components/ProductView";
 import Cropper from "./Cropper";
 import { Toggle, Field, Card } from "./ui";
@@ -307,6 +307,7 @@ function Editor({ initial, cats, settings, onClose, onSaved }) {
     initSpecs.materiais = [{ ...initSpecs.principal }];
   }
   delete initSpecs.principal;
+  if (initSpecs.importante === undefined) initSpecs.importante = DEFAULT_IMPORTANT;
   if (!initSpecs.kit) initSpecs.kit = { unit: "fotos", options: initial.kit_qty ? [{ qty: String(initial.kit_qty), price: "" }] : [{ qty: "10", price: "" }, { qty: "20", price: "" }] };
   const [p, setP] = useState({ ...EMPTY, ...initial, specs: initSpecs, custom_fields: initial.custom_fields || [],
     price: initial.price ?? "", promo_price: initial.promo_price ?? "", category_id: initial.category_id || "", kit_qty: initial.kit_qty ?? "", sale_note: initial.sale_note || "" });
@@ -368,6 +369,9 @@ function Editor({ initial, cats, settings, onClose, onSaved }) {
           </select>
         </Field>
         <Field label="Descrição"><textarea rows={5} value={p.description} onChange={(e) => set({ description: e.target.value })} /></Field>
+        <Field label="Importante" hint="Aparece em destaque na página do produto. Deixe vazio para não mostrar.">
+          <textarea rows={3} value={p.specs.importante} onChange={(e) => set({ specs: { ...p.specs, importante: e.target.value } })} />
+        </Field>
       </Card>
       <Card title="Fotografias" desc="Até 10 fotos de apresentação, no formato retangular. Pelo menos 1 para publicar.">
         <Photos photos={p.photos} originals={p.specs._originais || {}} onChange={(photos, o) => set({ photos, specs: { ...p.specs, _originais: o } })} />

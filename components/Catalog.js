@@ -17,19 +17,28 @@ export function Price({ p }) {
   return <div className="price"><strong>{ranged && <small>a partir de </small>}{brl(p.price)}</strong></div>;
 }
 
-export function Cover({ s }) {
+/* Topo: faixa colorida com o logotipo redondo sobreposto e a frase abaixo */
+export function Hero({ s }) {
   const b = s.banner;
   const img = b.enabled && b.type === "image" && b.image;
+  const band = !b.enabled ? { background: "linear-gradient(120deg, var(--primary), var(--accent))" } : img ? { backgroundImage: `url(${b.image})` } : { background: b.color };
   const text = b.enabled && (b.title || b.subtitle);
-  const style = !b.enabled ? { background: "linear-gradient(120deg, var(--primary), var(--accent))" } : img ? { backgroundImage: `url(${b.image})` } : { background: b.color };
   return (
-    <header className={`cover${text ? " has-text" : ""}${img ? " is-img" : ""}`} style={style}>
-      {text && <div className="cover-text">{b.title && <h2>{b.title}</h2>}{b.subtitle && <p>{b.subtitle}</p>}</div>}
+    <header className={`hero${img ? " is-img" : ""}`}>
+      <div className="hero-band" style={band}>
+        <div className="hero-logo">{s.logo ? <img src={s.logo} alt={`Logo ${s.name}`} /> : <span>{s.name}</span>}</div>
+        {text && (
+          <div className="hero-text">
+            {b.title && <h2 style={{ fontSize: `${Number(b.title_size) || 26}px` }}>{b.title}</h2>}
+            {b.subtitle && <p>{b.subtitle}</p>}
+          </div>
+        )}
+      </div>
     </header>
   );
 }
 
-function Card({ p, preview }) {
+function Card({ p, preview, compact }) {
   const off = hasPromo(p) ? Math.round((1 - p.promo_price / p.price) * 100) : 0;
   const inner = (
     <>
@@ -41,31 +50,33 @@ function Card({ p, preview }) {
         </div>
       </div>
       <div className="card-body">
-        <h3>{p.name}</h3>
-        {saleBadge(p) && <p className="card-sale">{saleBadge(p)}</p>}
+        <h3 className="card-name">{p.name}</h3>
+        <p className="card-sale">{saleBadge(p) || "\u00a0"}</p>
         <Price p={p} />
-        <span className="card-cta">Ver produto</span>
+        <span className="card-cta">{compact ? "Ver" : "Ver produto"}</span>
       </div>
     </>
   );
-  return preview ? <div className="card">{inner}</div> : <Link href={`/produto/${p.id}`} className="card">{inner}</Link>;
+  const cls = `card${compact ? " compact" : ""}`;
+  return preview ? <div className={cls}>{inner}</div> : <Link href={`/produto/${p.id}`} className={cls}>{inner}</Link>;
 }
 
-const Grid = ({ items, preview }) => <div className="grid">{items.map((p) => <Card key={p.id} p={p} preview={preview} />)}</div>;
+const Grid = ({ items, preview, compact }) => (
+  <div className={compact ? "grid grid3" : "grid"}>{items.map((p) => <Card key={p.id} p={p} preview={preview} compact={compact} />)}</div>
+);
 
 export default function Catalog({ settings: s, categories = [], products = [], preview = false }) {
-  const [cat, setCat] = useState(null);   // null = lista de categorias; "all" = todos; id = uma categoria
+  const [cat, setCat] = useState(null);   // null = início; "all" = todos; id = uma categoria
   const [q, setQ] = useState("");
   const [open, setOpen] = useState(null);
   const [copied, setCopied] = useState(false);
   const top = useRef();
-  // abre direto na categoria quando o endereço tem ?c=...
+
   useEffect(() => {
     if (preview) return;
     const c = new URLSearchParams(window.location.search).get("c");
     if (c) setCat(c);
   }, []);
-
   useEffect(() => {
     const f = () => setOpen(openStatus(s.hours));
     f();
@@ -77,6 +88,7 @@ export default function Catalog({ settings: s, categories = [], products = [], p
   const cats = categories.filter((c) => c.active !== false)
     .map((c) => ({ ...c, items: visible.filter((p) => p.category_id === c.id) }))
     .filter((c) => c.items.length);
+  const loose = visible.filter((p) => !cats.some((c) => c.id === p.category_id));
   const featured = visible.filter((p) => p.featured);
   const results = q ? visible.filter((p) => `${p.name} ${p.description || ""}`.toLowerCase().includes(q.toLowerCase())) : [];
   const current = cats.find((c) => c.id === cat);
@@ -85,8 +97,10 @@ export default function Catalog({ settings: s, categories = [], products = [], p
 
   function choose(id) {
     setCat(id); setQ("");
-    if (!preview) window.history.replaceState(null, "", id ? `/?c=${id}` : "/");
-    if (!preview) setTimeout(() => top.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 30);
+    if (!preview) {
+      window.history.replaceState(null, "", id ? `/?c=${id}` : "/");
+      setTimeout(() => top.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 30);
+    }
   }
   async function share() {
     const url = s.public_url || window.location.origin;
@@ -114,32 +128,48 @@ export default function Catalog({ settings: s, categories = [], products = [], p
     s.delivery.pickup && { t: "Retiradas", d: s.delivery.pickup_text },
   ].filter(Boolean);
 
-  // o que mostrar na seção de produtos
+  const chips = cats.length > 1 && (
+    <nav className="chips" aria-label="Categorias">
+      <button className={!cat ? "on" : ""} onClick={() => choose(null)}>Início</button>
+      {cats.map((c) => <button key={c.id} className={cat === c.id ? "on" : ""} onClick={() => choose(c.id)}>{c.name}</button>)}
+      <button className={cat === "all" ? "on" : ""} onClick={() => choose("all")}>Todos</button>
+    </nav>
+  );
+
   let body;
   if (!visible.length) body = <p className="empty">Em breve, novos produtos por aqui.</p>;
   else if (q) body = results.length ? <Grid items={results} preview={preview} /> : <p className="empty">Nenhum produto encontrado para “{q}”.</p>;
-  else if (cat === "all" || cats.length <= 1) body = <Grid items={visible} preview={preview} />;
-  else if (current) body = <Grid items={current.items} preview={preview} />;
+  else if (current) body = <><h3 className="cat-title">{current.name}</h3><Grid items={current.items} preview={preview} /></>;
+  else if (cat === "all" || cats.length === 0) body = <Grid items={visible} preview={preview} />;
   else body = (
     <>
-      <div className="cat-grid">
-        {cats.map((c) => (
-          <button key={c.id} className="cat-tile" onClick={() => choose(c.id)}>
-            <span className="cat-tile-name">{c.name}</span>
-            <span className="cat-tile-count">{c.items.length} {c.items.length === 1 ? "produto" : "produtos"}</span>
-          </button>
-        ))}
-      </div>
-      <button className="btn ghost block" onClick={() => choose("all")}>Ver todos os produtos</button>
+      {cats.map((c) => (
+        <section key={c.id} className="cat-sec">
+          <div className="cat-sec-head">
+            <h3>{c.name}</h3>
+            {c.items.length > 3 && <button className="link-btn" onClick={() => choose(c.id)}>Ver tudo ({c.items.length})</button>}
+          </div>
+          <Grid items={c.items.slice(0, 3)} preview={preview} compact />
+          {c.items.length > 3 && <button className="btn ghost block see-more" onClick={() => choose(c.id)}>Ver mais produtos de {c.name}</button>}
+        </section>
+      ))}
+      {loose.length > 0 && (
+        <section className="cat-sec">
+          <div className="cat-sec-head"><h3>Outros produtos</h3></div>
+          <Grid items={loose} preview={preview} compact />
+        </section>
+      )}
     </>
   );
+
+  const about = s.about;
+  const showAbout = about.enabled && (about.text || about.photo);
 
   return (
     <main className={`cat${preview ? " is-preview" : ""}`} style={vars}>
       <div className="topbar">{preview ? <span className="nav-btn">Carrinho</span> : <CartButton />}</div>
-      <Cover s={s} />
+      <Hero s={s} />
       <section className="ident">
-        <div className="logo">{s.logo ? <img src={s.logo} alt={`Logo ${s.name}`} /> : <span>{s.name}</span>}</div>
         <h1>{s.name}</h1>
         {s.slogan && <p className="slogan">{s.slogan}</p>}
         {s.hours.show && open !== null && <span className={`status ${open ? "on" : "off"}`}>{open ? "Aberto agora" : "Fechado agora"}</span>}
@@ -165,16 +195,21 @@ export default function Catalog({ settings: s, categories = [], products = [], p
       )}
 
       <section className="block" ref={top}>
-        <h2 className="sec-title">{current ? current.name : cat === "all" ? "Todos os produtos" : "Nossos produtos"}</h2>
-        {(current || cat === "all") && !q && (
-          <button className="btn block back-cats" onClick={() => choose(null)}>Ver todas as categorias</button>
-        )}
+        <h2 className="sec-title">Nossos produtos</h2>
         {visible.length > 0 && (
           <input className="search" type="search" placeholder="Buscar produto" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Buscar produto" />
         )}
-        {cats.length > 1 && !cat && !q && <p className="hint">Escolha uma categoria:</p>}
+        {!q && chips}
         {body}
       </section>
+
+      {showAbout && (
+        <section className="about">
+          {about.photo && <div className="about-photo"><img src={about.photo} alt="" /></div>}
+          {about.title && <h2>{about.title}</h2>}
+          {about.text && <div className="about-text">{about.text.split("\n").filter(Boolean).map((l, i) => <p key={i}>{l}</p>)}</div>}
+        </section>
+      )}
 
       {(s.hours.show || delivery.length > 0) && (
         <section className="block info">
@@ -197,7 +232,10 @@ export default function Catalog({ settings: s, categories = [], products = [], p
         </section>
       )}
 
-      <footer className="foot">{s.name}{s.slogan ? ` — ${s.slogan}` : ""}</footer>
+      <footer className="foot">
+        {s.policies.text && (preview ? <span className="btn ghost">{s.policies.title}</span> : <Link className="btn ghost" href="/politicas">{s.policies.title || "Políticas da loja"}</Link>)}
+        <p>{s.name}{s.slogan ? ` — ${s.slogan}` : ""}</p>
+      </footer>
       {wa && <a className="wa-float" href={waLink(s.whatsapp, `Olá! Vim pelo catálogo da ${s.name}.`)} target="_blank" rel="noreferrer" aria-label="WhatsApp"><WaIcon size={26} /></a>}
     </main>
   );

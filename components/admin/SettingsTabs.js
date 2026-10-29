@@ -140,6 +140,9 @@ export function TabBanner({ s, set, save, prods, cats }) {
         {b.enabled && (
           <Card title="Textos" desc="Os dois campos são opcionais.">
             <Field label="Título principal"><input value={b.title} onChange={(e) => setB({ title: e.target.value })} maxLength={90} /></Field>
+            <Field label={`Tamanho da letra do título: ${Number(b.title_size) || 26}px`} hint="A frase fica limitada a 2 linhas. Se cortar, diminua a letra ou encurte o texto.">
+              <input type="range" min="16" max="44" step="1" value={Number(b.title_size) || 26} onChange={(e) => setB({ title_size: Number(e.target.value) })} />
+            </Field>
             <Field label="Subtítulo"><input value={b.subtitle} placeholder="Ex.: Encomendas de Natal abertas" onChange={(e) => setB({ subtitle: e.target.value })} maxLength={120} /></Field>
           </Card>
         )}
@@ -274,6 +277,47 @@ export function TabEntrega({ s, set }) {
             <textarea rows={3} maxLength={300} value={d.pickup_text} onChange={(e) => setD({ pickup_text: e.target.value })} />
           </Field>
         )}
+      </Card>
+    </>
+  );
+}
+
+export function TabSobre({ s, set, save, prods, cats }) {
+  const a = s.about;
+  const setA = (patch) => set({ about: { ...a, ...patch } });
+  return (
+    <div className="ad-split">
+      <div>
+        <h1 className="ad-h1">Sobre nós</h1>
+        <Card title="Exibição">
+          <Toggle label="Mostrar a seção “Sobre nós” no catálogo" checked={a.enabled} onChange={(v) => setA({ enabled: v })} />
+        </Card>
+        <Card title="Foto" desc="Uma foto sua ou do ateliê. Salva automaticamente ao enviar.">
+          <ImagePicker value={a.photo} onChange={(photo) => save({ ...s, about: { ...a, photo } })} label="Enviar foto" />
+        </Card>
+        <Card title="Texto">
+          <Field label="Título"><input value={a.title} maxLength={80} onChange={(e) => setA({ title: e.target.value })} /></Field>
+          <Field label="Sobre quem está por trás da empresa" hint="Conte sua história, a ideia e o porquê da empresa. Use Enter para separar parágrafos.">
+            <textarea rows={8} maxLength={2000} value={a.text} onChange={(e) => setA({ text: e.target.value })} />
+          </Field>
+        </Card>
+      </div>
+      <Preview s={s} prods={prods} cats={cats} />
+    </div>
+  );
+}
+
+export function TabPoliticas({ s, set }) {
+  const p = s.policies;
+  const setP = (patch) => set({ policies: { ...p, ...patch } });
+  return (
+    <>
+      <h1 className="ad-h1">Políticas da loja</h1>
+      <Card title="Políticas" desc="Aparecem num botão no rodapé do catálogo, que abre uma página só com este texto. Deixe vazio para esconder o botão.">
+        <Field label="Nome do botão"><input value={p.title} maxLength={40} onChange={(e) => setP({ title: e.target.value })} /></Field>
+        <Field label="Texto das políticas" hint="Prazos, trocas, pagamentos, encomendas… Use Enter para separar parágrafos.">
+          <textarea rows={14} maxLength={10000} value={p.text} onChange={(e) => setP({ text: e.target.value })} />
+        </Field>
       </Card>
     </>
   );

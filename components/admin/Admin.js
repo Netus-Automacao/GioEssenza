@@ -2,14 +2,14 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { withDefaults } from "@/lib/data";
-import { TabGeral, TabIdentidade, TabBanner, TabCores, TabHorarios, TabEntrega } from "./SettingsTabs";
+import { TabGeral, TabIdentidade, TabBanner, TabCores, TabHorarios, TabEntrega, TabSobre, TabPoliticas } from "./SettingsTabs";
 import Products from "./Products";
 
 import Categories from "./Categories";
 
 const TABS = [
   ["dashboard", "Geral"], ["loja", "Identidade da loja"], ["banner", "Banner de destaque"], ["cores", "Cores e fontes"],
-  ["horarios", "Horário de funcionamento"], ["entrega", "Entrega e retirada"], ["categorias", "Categorias"], ["produtos", "Produtos"],
+  ["horarios", "Horário de funcionamento"], ["entrega", "Entrega e retirada"], ["sobre", "Sobre nós"], ["politicas", "Políticas"], ["categorias", "Categorias"], ["produtos", "Produtos"],
 ];
 const go = (t) => window.history.pushState(null, "", `/admin/${t}`);
 
@@ -95,6 +95,8 @@ function Dashboard({ initialTab }) {
         {tab === "cores" && <TabCores {...props} />}
         {tab === "horarios" && <TabHorarios {...props} />}
         {tab === "entrega" && <TabEntrega {...props} />}
+        {tab === "sobre" && <TabSobre {...props} />}
+        {tab === "politicas" && <TabPoliticas {...props} />}
         {tab === "categorias" && <Categories cats={cats} setCats={setCats} prods={prods} setToast={setToast} setTab={setTab} />}
         {tab === "produtos" && <Products key={newProduct} startNew={newProduct > 0} settings={saved} cats={cats} prods={prods} setProds={setProds} setToast={setToast} setTab={setTab} />}
         {isSettings && (dirty || saving) && (
