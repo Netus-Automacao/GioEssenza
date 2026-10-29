@@ -168,24 +168,46 @@ export default function Catalog({ settings: s, categories = [], products = [], p
 
   return (
     <main className={`cat${preview ? " is-preview" : ""}`} style={vars}>
-      <div className="topbar">{preview ? <span className="nav-btn">Carrinho</span> : <CartButton />}</div>
+      <div className="topbar">
+        <button className="nav-btn" onClick={preview ? undefined : share}>{copied ? "Link copiado" : "Compartilhar"}</button>
+        {preview ? <span className="nav-btn">Carrinho</span> : <CartButton />}
+      </div>
       <Hero s={s} />
       <section className="ident">
         <h1>{s.name}</h1>
         {s.slogan && <p className="slogan">{s.slogan}</p>}
         {s.hours.show && open !== null && <span className={`status ${open ? "on" : "off"}`}>{open ? "Aberto agora" : "Fechado agora"}</span>}
         {s.description && <p className="desc">{s.description}</p>}
-        <div className="ident-actions">
-          {wa && <a className="btn" href={waLink(s.whatsapp, `Olá! Vim pelo catálogo da ${s.name}.`)} target="_blank" rel="noreferrer"><WaIcon /> Chamar no WhatsApp</a>}
-          <button className="btn ghost" onClick={share}>{copied ? "Link copiado" : "Compartilhar"}</button>
-        </div>
-        {(s.links || []).filter((l) => l.url).length > 0 && (
-          <div className="social">
-            {s.links.filter((l) => l.url).map((l, i) => (
-              <a key={i} className="social-btn" href={l.url} target="_blank" rel="noreferrer"><LinkIcon type={l.type} /> {l.label || l.type}</a>
-            ))}
-          </div>
-        )}
+        {(() => {
+          const links = (s.links || []).filter((l) => l.url);
+          const insta = links.find((l) => l.type === "instagram");
+          const others = links.filter((l) => l !== insta);
+          const policiesBtn = s.policies.text && (preview
+            ? <span className="social-btn"><LinkIcon type="link" /> {s.policies.title || "Políticas da loja"}</span>
+            : <Link className="social-btn" href="/politicas"><LinkIcon type="link" /> {s.policies.title || "Políticas da loja"}</Link>);
+          return (
+            <>
+              <div className="ident-actions">
+                {wa && <a className="btn" href={waLink(s.whatsapp, `Olá! Vim pelo catálogo da ${s.name}.`)} target="_blank" rel="noreferrer"><WaIcon /> WhatsApp</a>}
+                {insta && <a className="btn" href={insta.url} target="_blank" rel="noreferrer"><LinkIcon type="instagram" /> {insta.label || "Instagram"}</a>}
+              </div>
+              {(others.length > 0 || s.address || policiesBtn) && (
+                <div className="social">
+                  {others.map((l, i) => (
+                    <a key={i} className="social-btn" href={l.url} target="_blank" rel="noreferrer"><LinkIcon type={l.type} /> {l.label || l.type}</a>
+                  ))}
+                  {s.address && (
+                    <a className="social-btn" href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(s.address)}`} target="_blank" rel="noreferrer">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="M12 21s-7-6.1-7-11a7 7 0 0 1 14 0c0 4.9-7 11-7 11z" /><circle cx="12" cy="10" r="2.5" /></svg>
+                      Endereço
+                    </a>
+                  )}
+                  {policiesBtn}
+                </div>
+              )}
+            </>
+          );
+        })()}
       </section>
 
       {featured.length > 0 && !cat && !q && (
@@ -242,15 +264,8 @@ export default function Catalog({ settings: s, categories = [], products = [], p
       )}
 
       <footer className="foot">
-        {s.policies.text && (preview ? <span className="btn ghost">{s.policies.title}</span> : <Link className="btn ghost" href="/politicas">{s.policies.title || "Políticas da loja"}</Link>)}
-        {s.address && (
-          <a className="foot-addr" href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(s.address)}`} target="_blank" rel="noreferrer">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M12 21s-7-6.1-7-11a7 7 0 0 1 14 0c0 4.9-7 11-7 11z" /><circle cx="12" cy="10" r="2.5" /></svg>
-            {s.address}
-          </a>
-        )}
-        <p className="foot-name">{s.name}</p>
-        {s.slogan && <p>{s.slogan}</p>}
+        {s.address && <p className="foot-addr-text">{s.address}</p>}
+        <p>© {new Date().getFullYear()} {s.name}{s.slogan ? ` ${s.slogan}` : ""}. Todos os direitos reservados.</p>
       </footer>
       {wa && <a className="wa-float" href={waLink(s.whatsapp, `Olá! Vim pelo catálogo da ${s.name}.`)} target="_blank" rel="noreferrer" aria-label="WhatsApp"><WaIcon size={26} /></a>}
     </main>
