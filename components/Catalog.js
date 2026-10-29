@@ -1,11 +1,12 @@
 "use client";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { brl, waLink, openStatus, hasPromo, productAvailable, DAYS, cssVars, hourLabel } from "@/lib/data";
+import { brl, waLink, openStatus, hasPromo, productAvailable, DAYS, cssVars, hourLabel, saleBadge } from "@/lib/data";
 import { WaIcon } from "./Icons";
+import CartButton from "./CartButton";
 
 export function Price({ p }) {
-  const ranged = (p.variations || []).some((g) => g.values.some((v) => v.price !== "" && v.price != null && Number(v.price) !== Number(p.price)));
+  const ranged = (p.variations || []).some((g) => g.values.some((v) => v.price !== "" && v.price != null && (g.price_mode === "add" ? Number(v.price) > 0 : Number(v.price) !== Number(p.price))));
   if (hasPromo(p)) return <div className="price"><strong>{brl(p.promo_price)}</strong><s>{brl(p.price)}</s></div>;
   return <div className="price"><strong>{ranged && <small>a partir de </small>}{brl(p.price)}</strong></div>;
 }
@@ -33,7 +34,7 @@ function Card({ p, preview }) {
           {!productAvailable(p) && <span className="badge out">Indisponível</span>}
         </div>
       </div>
-      <div className="card-body"><h3>{p.name}</h3><Price p={p} /></div>
+      <div className="card-body"><h3>{p.name}</h3>{saleBadge(p) && <p className="card-sale">{saleBadge(p)}</p>}<Price p={p} /></div>
     </>
   );
   return preview ? <div className="card">{inner}</div> : <Link href={`/produto/${p.id}`} className="card">{inner}</Link>;
@@ -53,7 +54,7 @@ export default function Catalog({ settings: s, categories = [], products = [], p
   }, [s.hours]);
 
   const visible = products.filter((p) => p.active !== false);
-  const usedCats = categories.filter((c) => visible.some((p) => p.category_id === c.id));
+  const usedCats = categories.filter((c) => c.active !== false).filter((c) => visible.some((p) => p.category_id === c.id));
   const featured = visible.filter((p) => p.featured);
   const list = useMemo(() => visible.filter((p) =>
     (cat === "all" || p.category_id === cat) &&
@@ -89,6 +90,7 @@ export default function Catalog({ settings: s, categories = [], products = [], p
 
   return (
     <main className={`cat${preview ? " is-preview" : ""}`} style={vars}>
+      <div className="topbar">{preview ? <span className="cart-btn">Carrinho</span> : <CartButton />}</div>
       <Cover s={s} />
       <section className="ident">
         <div className="logo">{s.logo ? <img src={s.logo} alt={`Logo ${s.name}`} /> : <span>{s.name}</span>}</div>

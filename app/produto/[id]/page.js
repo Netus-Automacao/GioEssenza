@@ -10,5 +10,5 @@ export async function generateMetadata({ params }) {
 export default async function Page({ params }) {
   const [settings, product] = await Promise.all([getSettings(), getProduct(params.id)]);
   if (!product || !settings.active) notFound();
-  return <ProductView settings={settings} product={product} />;
+  return <ProductView settings={settings} product={product} categoryName={product.category_name} />;
 }

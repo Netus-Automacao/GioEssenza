@@ -2,12 +2,15 @@
 
 Catálogo virtual com área administrativa. Next.js 14 + Supabase, hospedado na Vercel.
 
-- **Catálogo público:** `/` e `/produto/[id]`
-- **Painel da proprietária:** `/admin` (login com e-mail e senha)
+- **Catálogo público:** `/`, `/produto/[id]` e `/carrinho`
+- **Painel:** `/admin/login`, `/admin/dashboard`, `/admin/loja`, `/admin/banner`, `/admin/cores`, `/admin/horarios`, `/admin/entrega`, `/admin/categorias`, `/admin/produtos`
 
 ## 1. Supabase (banco, login e imagens)
 1. Crie um projeto em https://supabase.com (plano gratuito).
-2. **SQL Editor** → cole e rode `supabase/schema.sql`. Depois rode `supabase/seed.sql` (13 produtos do catálogo de encadernação, já com variações e preços).
+2. **SQL Editor** → rode `supabase/schema.sql`. Depois, opcionalmente:
+   - `supabase/seed.sql` — os 13 produtos reais do catálogo de encadernação, com preços, variações e especificações. Entram **inativos** (sem foto); publique cada um após enviar as fotos.
+   - `supabase/seed_teste.sql` — os 2 produtos de teste (Agenda e Kit de fotos), inativos e com preço zero.
+   - Já rodou a versão 1? Rode só `supabase/migration_v2.sql`.
 3. **Authentication → Users → Add user**: crie o usuário da Gio (e-mail + senha, marque *Auto Confirm*).
 4. **IMPORTANTE — Authentication → Sign In / Providers → desative "Allow new users to sign up".** Sem isso, qualquer pessoa poderia criar uma conta e editar o catálogo.
 5. **Project Settings → API**: copie a *Project URL* e a *anon public key*.
@@ -26,8 +29,16 @@ npm run dev                  # http://localhost:3000 e /admin
 
 **Domínio próprio:** registre o domínio (ex.: registro.br), adicione em Vercel → Settings → Domains e siga as instruções de DNS. Depois cole o endereço em Painel → Identidade da loja → Endereço público.
 
-## Funcionalidades
-Geral (ativar/desativar catálogo, resumo, copiar link) · Identidade (logo, nome, slogan, WhatsApp, descrição, endereço) · Banner (cor sólida ou imagem, título e subtítulo, prévia) · Cores (4 cores com hex/RGB, degradê, verificação de contraste, prévia ao vivo) · Horários por dia com "Aberto agora" · Entrega por aplicativo e retirada · Produtos (fotos com ordem e foto principal, categorias, preço promocional, destaque, estoque, variações com preço/foto/estoque próprios, opções adicionais com acréscimo e campo de texto) · Pedido pelo WhatsApp com mensagem pronta contendo as escolhas do cliente.
+## Regras de preço
+- Cada produto tem preço normal e promocional (opcional).
+- Em cada grupo de variação, a Gio escolhe se o preço da opção **substitui** o preço do produto (ex.: 400 páginas = R$ 105) ou **soma** a ele (ex.: + R$ 5). Opção sem preço = preço do produto.
+- Opções adicionais somam o acréscimo cadastrado. Nenhum frete ou taxa é adicionado.
 
-## Fotos dos produtos
-O seed não inclui fotos: envie-as pelo painel em **Produtos → Editar → Fotografias**.
+## Personalização em kits
+A Gio cadastra os campos (nome, frase…), o limite de caracteres e as frases sugeridas. Em um kit, o **cliente escolhe** se usa o mesmo texto para o kit todo ou um texto para cada unidade. Itens com personalizações diferentes ficam separados no carrinho.
+
+## Estoque
+Como o pedido é concluído no WhatsApp, o site não sabe quando a venda foi confirmada: **a Gio atualiza o estoque no painel após cada venda.** O carrinho não deixa passar da quantidade disponível.
+
+## Carrinho
+Fica salvo no navegador do cliente. Os dados da loja e dos produtos ficam sempre no banco (Supabase).

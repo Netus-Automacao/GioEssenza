@@ -5,10 +5,13 @@ import { withDefaults } from "@/lib/data";
 import { TabGeral, TabIdentidade, TabBanner, TabCores, TabHorarios, TabEntrega } from "./SettingsTabs";
 import Products from "./Products";
 
+import Categories from "./Categories";
+
 const TABS = [
-  ["geral", "Geral"], ["identidade", "Identidade da loja"], ["banner", "Banner de destaque"], ["cores", "Cores"],
-  ["horarios", "Horário de funcionamento"], ["entrega", "Entrega e retirada"], ["produtos", "Produtos"],
+  ["dashboard", "Geral"], ["loja", "Identidade da loja"], ["banner", "Banner de destaque"], ["cores", "Cores"],
+  ["horarios", "Horário de funcionamento"], ["entrega", "Entrega e retirada"], ["categorias", "Categorias"], ["produtos", "Produtos"],
 ];
+const go = (t) => window.history.pushState(null, "", `/admin/${t}`);
 
 function Login() {
   const [email, setEmail] = useState(""); const [pw, setPw] = useState("");
@@ -33,8 +36,14 @@ function Login() {
   );
 }
 
-function Dashboard() {
-  const [tab, setTab] = useState("geral");
+function Dashboard({ initialTab }) {
+  const [tab, setTabState] = useState(TABS.some(([k]) => k === initialTab) ? initialTab : "dashboard");
+  const [newProduct, setNewProduct] = useState(0);
+  const setTab = (t, opts = {}) => { setTabState(t); go(t); if (opts.newProduct) setNewProduct((n) => n + 1); window.scrollTo(0, 0); };
+  useEffect(() => {
+    const f = () => { const t = window.location.pathname.split("/")[2] || "dashboard"; if (TABS.some(([k]) => k === t)) setTabState(t); };
+    window.addEventListener("popstate", f); return () => window.removeEventListener("popstate", f);
+  }, []);
   const [saved, setSaved] = useState(null);
   const [draft, setDraft] = useState(null);
   const [cats, setCats] = useState([]);
@@ -66,8 +75,8 @@ function Dashboard() {
     setSaved(next); setDraft(next); setToast("Alterações salvas");
   }
 
-  const props = { s: draft, set, save, cats, prods, setToast };
-  const isSettings = tab !== "produtos";
+  const props = { s: draft, set, save, cats, prods, setToast, setTab };
+  const isSettings = !["produtos", "categorias"].includes(tab);
 
   return (
     <div className="ad">
@@ -80,13 +89,14 @@ function Dashboard() {
         </div>
       </aside>
       <main className="ad-main">
-        {tab === "geral" && <TabGeral {...props} />}
-        {tab === "identidade" && <TabIdentidade {...props} />}
+        {tab === "dashboard" && <TabGeral {...props} />}
+        {tab === "loja" && <TabIdentidade {...props} />}
         {tab === "banner" && <TabBanner {...props} />}
         {tab === "cores" && <TabCores {...props} />}
         {tab === "horarios" && <TabHorarios {...props} />}
         {tab === "entrega" && <TabEntrega {...props} />}
-        {tab === "produtos" && <Products cats={cats} setCats={setCats} prods={prods} setProds={setProds} setToast={setToast} />}
+        {tab === "categorias" && <Categories cats={cats} setCats={setCats} prods={prods} setToast={setToast} setTab={setTab} />}
+        {tab === "produtos" && <Products key={newProduct} startNew={newProduct > 0} settings={saved} cats={cats} prods={prods} setProds={setProds} setToast={setToast} setTab={setTab} />}
         {isSettings && (dirty || saving) && (
           <div className="ad-savebar">
             <span>Há alterações não salvas.</span>
@@ -100,13 +110,17 @@ function Dashboard() {
   );
 }
 
-export default function Admin() {
+export default function Admin({ initialTab }) {
   const [session, setSession] = useState(undefined);
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setSession(data.session));
     const { data } = supabase.auth.onAuthStateChange((_e, s) => setSession(s));
     return () => data.subscription.unsubscribe();
   }, []);
+  useEffect(() => {
+    if (session === null && initialTab !== "login") window.history.replaceState(null, "", "/admin/login");
+    if (session && window.location.pathname.startsWith("/admin/login")) window.history.replaceState(null, "", "/admin/dashboard");
+  }, [session]);
   if (session === undefined) return <div className="ad-loading">Carregando…</div>;
-  return session ? <Dashboard /> : <Login />;
+  return session ? <Dashboard initialTab={initialTab === "login" ? "dashboard" : initialTab} /> : <Login />;
 }

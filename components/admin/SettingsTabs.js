@@ -24,7 +24,7 @@ function Preview({ s, prods, cats }) {
 
 const useOrigin = () => { const [o, setO] = useState(""); useEffect(() => setO(window.location.origin), []); return o; };
 
-export function TabGeral({ s, set, save, prods, setToast }) {
+export function TabGeral({ s, set, save, prods, setToast, setTab }) {
   const origin = useOrigin();
   const url = s.public_url || origin;
   const activeCount = prods.filter((p) => p.active).length;
@@ -45,6 +45,8 @@ export function TabGeral({ s, set, save, prods, setToast }) {
         <div className="ad-row">
           <a className="ad-btn" href="/" target="_blank" rel="noreferrer">Abrir catálogo</a>
           <button className="ad-btn ghost" onClick={async () => { await navigator.clipboard.writeText(url); setToast("Endereço copiado"); }}>Copiar endereço</button>
+          <button className="ad-btn ghost" onClick={() => setTab("produtos", { newProduct: true })}>+ Novo produto</button>
+          <button className="ad-btn ghost" onClick={() => setTab("produtos")}>Gerenciar produtos</button>
         </div>
       </Card>
     </>

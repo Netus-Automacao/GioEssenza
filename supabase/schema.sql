@@ -12,15 +12,16 @@ create table if not exists public.settings (
 create table if not exists public.categories (
   id uuid primary key default gen_random_uuid(),
   name text not null,
-  position int not null default 0
+  position int not null default 0,
+  active boolean not null default true
 );
 
 create table if not exists public.products (
   id uuid primary key default gen_random_uuid(),
   name text not null,
-  category_id uuid references public.categories(id) on delete set null,
+  category_id uuid references public.categories(id) on delete restrict,
   description text not null default '',
-  photos jsonb not null default '[]'::jsonb,
+  photos jsonb not null default '[]'::jsonb check (jsonb_array_length(photos) <= 10),
   price numeric(10,2) not null default 0 check (price >= 0),
   promo_price numeric(10,2) check (promo_price is null or promo_price >= 0),
   featured boolean not null default false,
@@ -29,6 +30,11 @@ create table if not exists public.products (
   stock int not null default 0 check (stock >= 0),
   variations jsonb not null default '[]'::jsonb,
   options jsonb not null default '[]'::jsonb,
+  sale_type text not null default 'unit' check (sale_type in ('unit','kit','other')),
+  kit_qty int check (kit_qty is null or kit_qty > 0),
+  sale_note text not null default '',
+  specs jsonb not null default '{}'::jsonb,
+  custom_fields jsonb not null default '[]'::jsonb,
   position int not null default 0,
   created_at timestamptz not null default now()
 );
