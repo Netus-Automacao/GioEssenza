@@ -7,7 +7,7 @@ import Cropper from "./Cropper";
 import { Toggle, Field, Card } from "./ui";
 
 const MAX_PHOTOS = 10;
-const EMPTY_SPECS = { dimensions: {}, miolo: { uses: true }, capa: { uses: true }, principal: {}, laminacao: { has: "nao" }, estrutura: "", encadernacao: {}, acessorios: [], outros_acabamentos: "", arte: { tipo: "" } };
+const EMPTY_SPECS = { dimensions: {}, miolo: { uses: true }, capa: { uses: true }, materiais: [], laminacao: { has: "nao" }, estrutura: "", encadernacao: {}, acessorios: [], outros_acabamentos: "", arte: { tipo: "" } };
 const EMPTY = { name: "", category_id: "", description: "", photos: [], price: "", promo_price: "", featured: false, active: false, stock_enabled: false, stock: 0,
   sale_type: "unit", kit_qty: "", sale_note: "", specs: EMPTY_SPECS, custom_fields: [], variations: [], options: [] };
 const move = (arr, i, d) => { const a = [...arr]; const j = i + d; if (j < 0 || j >= a.length) return a; [a[i], a[j]] = [a[j], a[i]]; return a; };
@@ -185,7 +185,7 @@ function Specs({ value, onChange }) {
     <div className="ad-groups">
       <datalist id="dl-papel"><option value="Offset" /><option value="Couché" /><option value="Fotográfico Gloss" /><option value="Fotográfico fosco" /><option value="Kraft" /><option value="Vergê" /></datalist>
       <datalist id="dl-estrutura"><option value="Capa dura" /><option value="Capa flexível" /></datalist>
-      <datalist id="dl-enc"><option value="Wire-O branco" /><option value="Wire-O" /><option value="Espiral" /><option value="Sem encadernação" /></datalist>
+      <datalist id="dl-enc"><option value="Wire-o branco" /></datalist>
       <datalist id="dl-acc"><option value="Bolso plástico" /><option value="Elástico" /><option value="Marcador" /><option value="Divisórias" /></datalist>
 
       <div className="ad-group"><strong>Dimensões</strong>
@@ -198,7 +198,24 @@ function Specs({ value, onChange }) {
 
       {Paper({ k: "miolo", title: "Miolo" })}
       {Paper({ k: "capa", title: "Capa", extra: ["aplicacao", "Aplicação (ex.: adesivo)"] })}
-      {Paper({ k: "principal", title: "Item principal (para produtos sem miolo/capa)", extra: ["finalidade", "Finalidade"], optional: false })}
+      <div className="ad-group"><strong>Materiais</strong>
+        <p className="ad-note">Adicione quantos quiser. Nenhum campo é obrigatório. O cliente vê só o que você escrever, sem o nome dos campos.</p>
+        {(sp.materiais || []).map((m, i) => {
+          const setM = (patch) => onChange({ ...sp, materiais: sp.materiais.map((x, j) => (j === i ? { ...x, ...patch } : x)) });
+          return (
+            <div key={i} className="ad-group" style={{ background: "#fff" }}>
+              <div className="ad-grid2">
+                <Field label="Tipo / modelo"><input list="dl-papel" value={m.tipo || ""} onChange={(e) => setM({ tipo: e.target.value })} /></Field>
+                <Field label="Gramatura (g/m²)"><input type="number" min="0" value={m.gramatura || ""} onChange={(e) => setM({ gramatura: e.target.value })} /></Field>
+                <Field label="Finalidade"><input value={m.finalidade || ""} onChange={(e) => setM({ finalidade: e.target.value })} /></Field>
+                <Field label="Observações"><input value={m.obs || ""} onChange={(e) => setM({ obs: e.target.value })} /></Field>
+              </div>
+              <button type="button" className="ad-btn ghost sm danger" style={{ alignSelf: "flex-start" }} onClick={() => onChange({ ...sp, materiais: sp.materiais.filter((_, j) => j !== i) })}>Remover material</button>
+            </div>
+          );
+        })}
+        <button type="button" className="ad-btn ghost" style={{ alignSelf: "flex-start" }} onClick={() => onChange({ ...sp, materiais: [...(sp.materiais || []), { tipo: "", gramatura: "", finalidade: "", obs: "" }] })}>+ Adicionar material</button>
+      </div>
 
       <div className="ad-group"><strong>Laminação</strong>
         <div className="ad-grid2">
@@ -217,8 +234,12 @@ function Specs({ value, onChange }) {
       <div className="ad-group"><strong>Acabamento e estrutura</strong>
         <div className="ad-grid2">
           <Field label="Estrutura"><input list="dl-estrutura" value={sp.estrutura || ""} onChange={(e) => onChange({ ...sp, estrutura: e.target.value })} /></Field>
-          <Field label="Encadernação"><input list="dl-enc" value={sp.encadernacao?.tipo || ""} onChange={(e) => set("encadernacao", { tipo: e.target.value })} /></Field>
-          <Field label="Cor da encadernação"><input value={sp.encadernacao?.cor || ""} onChange={(e) => set("encadernacao", { cor: e.target.value })} /></Field>
+          <Field label="Espiral / Wire-o">
+            <select value={sp.encadernacao?.tipo ? "Wire-o branco" : ""} onChange={(e) => set("encadernacao", { tipo: e.target.value, cor: "" })}>
+              <option value="">Não informar</option>
+              <option value="Wire-o branco">Wire-o branco</option>
+            </select>
+          </Field>
         </div>
         <span className="ad-label">Acessórios</span>
         {acc.map((a, i) => (
@@ -281,7 +302,13 @@ function CustomFields({ value, onChange, isKit }) {
 
 /* ---------------- Formulário ---------------- */
 function Editor({ initial, cats, settings, onClose, onSaved }) {
-  const [p, setP] = useState({ ...EMPTY, ...initial, specs: { ...EMPTY_SPECS, ...(initial.specs || {}) }, custom_fields: initial.custom_fields || [],
+  const initSpecs = { ...EMPTY_SPECS, ...(initial.specs || {}) };
+  if (!(initSpecs.materiais || []).length && initSpecs.principal && Object.values(initSpecs.principal).some((v) => String(v || "").trim())) {
+    initSpecs.materiais = [{ ...initSpecs.principal }];
+  }
+  delete initSpecs.principal;
+  if (!initSpecs.kit) initSpecs.kit = { unit: "fotos", options: initial.kit_qty ? [{ qty: String(initial.kit_qty), price: "" }] : [{ qty: "10", price: "" }, { qty: "20", price: "" }] };
+  const [p, setP] = useState({ ...EMPTY, ...initial, specs: initSpecs, custom_fields: initial.custom_fields || [],
     price: initial.price ?? "", promo_price: initial.promo_price ?? "", category_id: initial.category_id || "", kit_qty: initial.kit_qty ?? "", sale_note: initial.sale_note || "" });
   const [err, setErr] = useState(""); const [busy, setBusy] = useState(false); const [preview, setPreview] = useState(false);
   const set = (patch) => setP((x) => ({ ...x, ...patch }));
@@ -293,7 +320,9 @@ function Editor({ initial, cats, settings, onClose, onSaved }) {
     if (!p.category_id) return "Escolha a categoria do produto.";
     if (p.price === "" || !isFinite(price) || price < 0) return "Informe um preço normal válido (zero ou maior).";
     if (promo !== null && (!isFinite(promo) || promo < 0 || promo >= price)) return "O preço promocional precisa ser menor que o preço normal.";
-    if (p.sale_type === "kit" && !(parseInt(p.kit_qty) > 0)) return "Informe quantos itens vêm no kit.";
+    const kops = (p.specs.kit?.options || []).filter((o) => parseInt(o.qty) > 0);
+    if (p.sale_type === "kit" && !kops.length) return "Informe pelo menos uma opção de quantidade do kit.";
+    if (kops.some((o) => o.price !== "" && o.price != null && Number(o.price) < 0)) return "Preços do kit não podem ser negativos.";
     if (active && p.photos.length < 1) return "Adicione pelo menos 1 foto para publicar. Você pode salvar como inativo sem foto.";
     const variations = p.variations.filter((g) => g.name.trim()).map((g) => ({ ...g, name: g.name.trim(), values: g.values.filter((v) => v.label.trim()) })).filter((g) => g.values.length);
     if (variations.some((g) => g.values.some((v) => v.price !== "" && v.price != null && Number(v.price) < 0))) return "Preços de variações não podem ser negativos.";
@@ -302,11 +331,12 @@ function Editor({ initial, cats, settings, onClose, onSaved }) {
     const custom_fields = p.custom_fields.filter((f) => f.label.trim()).map((f) => ({ ...f, label: f.label.trim() }));
     const sp = p.specs;
     const orig = Object.fromEntries(Object.entries(sp._originais || {}).filter(([k]) => p.photos.includes(k)));
-    const specs = { ...sp, _originais: orig, acessorios: (sp.acessorios || []).map((a) => a.trim()).filter(Boolean) };
+    const kit = { unit: (sp.kit?.unit || "").trim() || "unidades", options: kops.map((o) => ({ qty: String(parseInt(o.qty)), price: o.price === "" || o.price == null ? "" : String(Number(o.price)) })) };
+    const specs = { ...sp, kit, _originais: orig, acessorios: (sp.acessorios || []).map((a) => a.trim()).filter(Boolean) };
     return {
       name: p.name.trim(), category_id: p.category_id, description: p.description, photos: p.photos.slice(0, MAX_PHOTOS),
       price, promo_price: promo, featured: p.featured, active, stock_enabled: p.stock_enabled, stock: Math.max(0, parseInt(p.stock) || 0),
-      sale_type: p.sale_type, kit_qty: p.sale_type === "kit" ? parseInt(p.kit_qty) : null, sale_note: p.sale_type === "other" ? p.sale_note.trim() : "",
+      sale_type: p.sale_type, kit_qty: p.sale_type === "kit" ? parseInt(kops[0].qty) : null, sale_note: p.sale_type === "other" ? p.sale_note.trim() : "",
       specs, custom_fields, variations, options,
     };
   }
@@ -322,7 +352,7 @@ function Editor({ initial, cats, settings, onClose, onSaved }) {
     onSaved(data, active);
   }
 
-  const draft = { ...p, price: Number(p.price) || 0, promo_price: p.promo_price === "" ? null : Number(p.promo_price), kit_qty: parseInt(p.kit_qty) || null, active: true };
+  const draft = { ...p, price: Number(p.price) || 0, promo_price: p.promo_price === "" ? null : Number(p.promo_price), kit_qty: parseInt(p.specs.kit?.options?.[0]?.qty) || null, active: true };
   return (
     <div className="ad-editor">
       <div className="ad-editor-head">
@@ -347,9 +377,28 @@ function Editor({ initial, cats, settings, onClose, onSaved }) {
           <Field label="Vendido como">
             <select value={p.sale_type} onChange={(e) => set({ sale_type: e.target.value })}><option value="unit">Unidade</option><option value="kit">Kit</option><option value="other">Outra forma</option></select>
           </Field>
-          {p.sale_type === "kit" && <Field label="Quantidade de itens no kit *"><input type="number" min="1" value={p.kit_qty} onChange={(e) => set({ kit_qty: e.target.value })} /></Field>}
+          {p.sale_type === "kit" && <Field label="Nome dos itens do kit" hint="Ex.: fotos, blocos, unidades."><input value={p.specs.kit?.unit || ""} onChange={(e) => set({ specs: { ...p.specs, kit: { ...p.specs.kit, unit: e.target.value } } })} /></Field>}
           {p.sale_type === "other" && <Field label="Descrição da forma de venda"><input placeholder="Ex.: Pacote com 5 blocos" value={p.sale_note} onChange={(e) => set({ sale_note: e.target.value })} /></Field>}
         </div>
+        {p.sale_type === "kit" && (() => {
+          const k = p.specs.kit || { unit: "", options: [] };
+          const setK = (options) => set({ specs: { ...p.specs, kit: { ...k, options } } });
+          return (
+            <div className="ad-group">
+              <strong>Opções de quantidade do kit</strong>
+              <p className="ad-note">O cliente escolhe uma delas. Deixe o preço vazio para usar o preço normal do produto.</p>
+              {(k.options || []).map((o, i) => (
+                <div key={i} className="ad-row">
+                  <input className="ad-input" style={{ width: 90 }} type="number" min="1" placeholder="Qtd." value={o.qty} onChange={(e) => setK(k.options.map((x, j) => (j === i ? { ...x, qty: e.target.value } : x)))} aria-label="Quantidade" />
+                  <span>{k.unit || "unidades"} —</span>
+                  <input className="ad-input" style={{ width: 120 }} type="number" min="0" step="0.01" placeholder="Preço R$" value={o.price} onChange={(e) => setK(k.options.map((x, j) => (j === i ? { ...x, price: e.target.value } : x)))} aria-label="Preço" />
+                  <button type="button" className="ad-btn ghost sm danger" onClick={() => setK(k.options.filter((_, j) => j !== i))}>Remover</button>
+                </div>
+              ))}
+              <button type="button" className="ad-btn ghost" style={{ alignSelf: "flex-start" }} onClick={() => setK([...(k.options || []), { qty: "", price: "" }])}>+ Adicionar opção de kit</button>
+            </div>
+          );
+        })()}
         <div className="ad-grid2">
           <Field label="Preço normal (R$) *"><input type="number" min="0" step="0.01" value={p.price} onChange={(e) => set({ price: e.target.value })} /></Field>
           <Field label="Preço promocional (R$)" hint="Opcional. Deixe vazio quando não houver promoção."><input type="number" min="0" step="0.01" value={p.promo_price} onChange={(e) => set({ promo_price: e.target.value })} /></Field>
@@ -361,7 +410,7 @@ function Editor({ initial, cats, settings, onClose, onSaved }) {
         {p.stock_enabled && <Field label="Quantidade disponível"><input type="number" min="0" step="1" value={p.stock} onChange={(e) => set({ stock: e.target.value })} /></Field>}
       </Card>
       <Card title="Especificações técnicas"><Specs value={p.specs} onChange={(specs) => set({ specs })} /></Card>
-      <Card title="Personalização"><CustomFields value={p.custom_fields} onChange={(custom_fields) => set({ custom_fields })} isKit={p.sale_type === "kit" && parseInt(p.kit_qty) > 1} /></Card>
+      <Card title="Personalização"><CustomFields value={p.custom_fields} onChange={(custom_fields) => set({ custom_fields })} isKit={p.sale_type === "kit"} /></Card>
       <Card title="Variações" desc="Cor, modelo, tamanho, miolo… O cliente escolhe uma opção de cada grupo. Cada opção pode ter preço, foto e estoque próprios.">
         <Variations value={p.variations} onChange={(variations) => set({ variations })} photos={p.photos} stockOn={p.stock_enabled} />
       </Card>

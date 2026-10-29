@@ -6,6 +6,12 @@ import { WaIcon } from "./Icons";
 import CartButton from "./CartButton";
 
 export function Price({ p }) {
+  const kp = (p.specs?.kit?.options || []).map((o) => o.price).filter((v) => v !== "" && v != null).map(Number);
+  if (p.sale_type === "kit" && kp.length) {
+    const min = Math.min(...kp, ...(kp.length < (p.specs.kit.options || []).length ? [Number(p.price)] : []));
+    const many = new Set([...kp, Number(p.price)]).size > 1;
+    return <div className="price"><strong>{many && <small>a partir de </small>}{brl(min)}</strong></div>;
+  }
   const ranged = (p.variations || []).some((g) => g.values.some((v) => v.price !== "" && v.price != null && (g.price_mode === "add" ? Number(v.price) > 0 : Number(v.price) !== Number(p.price))));
   if (hasPromo(p)) return <div className="price"><strong>{brl(p.promo_price)}</strong><s>{brl(p.price)}</s></div>;
   return <div className="price"><strong>{ranged && <small>a partir de </small>}{brl(p.price)}</strong></div>;

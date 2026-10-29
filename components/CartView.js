@@ -41,7 +41,7 @@ export default function CartView({ settings: s }) {
                   <div className="cart-img">{x.photo ? <img src={x.photo} alt="" /> : <span className="ph">{x.name.charAt(0)}</span>}</div>
                   <div className="cart-info">
                     <Link href={`/produto/${x.id}`}><strong>{x.name}</strong></Link>
-                    {x.sale_type === "kit" && x.kit_qty && <small>Kit com {x.kit_qty} unidades</small>}
+                    {x.sale_type === "kit" && x.kit_qty && <small>Kit com {x.kit_qty} {x.kit_unit || "unidades"}</small>}
                     {x.lines.map((l, i) => <small key={i}>{l}</small>)}
                     <div className="cart-row">
                       <div className="qty">

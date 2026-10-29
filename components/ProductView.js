@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { brl, hasPromo, productAvailable, valueAvailable, cssVars, unitPrice, maxQty, saleBadge, specSections, filled } from "@/lib/data";
+import { brl, hasPromo, productAvailable, valueAvailable, cssVars, unitPrice, maxQty, saleBadge, specSections, filled, kitOptions, kitUnit } from "@/lib/data";
 import { addToCart } from "@/lib/cart";
 import CartButton from "./CartButton";
 
@@ -11,7 +11,12 @@ export default function ProductView({ settings: s, product: p, categoryName, pre
   const groups = p.variations || [];
   const options = p.options || [];
   const fields = p.custom_fields || [];
-  const isKit = p.sale_type === "kit" && Number(p.kit_qty) > 1;
+  const kits = p.sale_type === "kit" ? kitOptions(p) : [];
+  const [kitIdx, setKitIdx] = useState(kits.length === 1 ? 0 : null);
+  const kit = kits[kitIdx];
+  const kitQty = kit ? Number(kit.qty) : Number(p.kit_qty) || 0;
+  const isKit = p.sale_type === "kit" && kitQty > 1;
+  const priced = kit && kit.price !== "" && kit.price != null ? { ...p, price: Number(kit.price), promo_price: null } : p;
 
   const [idx, setIdx] = useState(0);
   const [touch, setTouch] = useState(null);
@@ -24,13 +29,13 @@ export default function ProductView({ settings: s, product: p, categoryName, pre
   const [err, setErr] = useState("");
   const [added, setAdded] = useState(false);
 
-  const price = useMemo(() => unitPrice(p, sel, opt), [sel, opt, p]);
+  const price = useMemo(() => unitPrice(priced, sel, opt), [sel, opt, p, kitIdx]);
   const max = maxQty(p, sel);
   const available = productAvailable(p) && (max == null || max > 0);
   const specs = specSections(p.specs);
   const badge = saleBadge(p);
   const photos = [...new Set([...(p.photos || []), ...groups.flatMap((g) => g.values.map((v) => v.photo).filter(Boolean))])];
-  const units = (fi) => (isKit && mode[fi] === "each" ? Number(p.kit_qty) : 1);
+  const units = (fi) => (isKit && mode[fi] === "each" ? kitQty : 1);
 
   function pickValue(gi, vi) {
     setSel({ ...sel, [gi]: vi }); setErr(""); setAdded(false);
@@ -43,6 +48,7 @@ export default function ProductView({ settings: s, product: p, categoryName, pre
   }
 
   function add() {
+    if (kits.length && !kit) return setErr("Escolha a quantidade do kit.");
     for (let gi = 0; gi < groups.length; gi++) if (sel[gi] === undefined) return setErr(`Escolha uma opção em “${groups[gi].name}”.`);
     for (let gi = 0; gi < options.length; gi++) {
       const g = options[gi]; const cur = opt[gi] || [];
@@ -56,6 +62,7 @@ export default function ProductView({ settings: s, product: p, categoryName, pre
     if (max != null && qty > max) return setErr(`Só há ${max} disponível(is).`);
 
     const lines = [];
+    if (kit && kits.length > 1) lines.push(`Kit: ${kit.qty} ${kitUnit(p)}`);
     groups.forEach((g, gi) => lines.push(`${g.name}: ${g.values[sel[gi]].label}`));
     options.forEach((g, gi) => (opt[gi] || []).forEach((ci) => {
       const c = g.choices[ci]; const t = txt[`${gi}-${ci}`];
@@ -69,7 +76,7 @@ export default function ProductView({ settings: s, product: p, categoryName, pre
       else vals.forEach((v, u) => v && lines.push(`${f.label} — unidade ${u + 1}: ${v}`));
     });
     const key = JSON.stringify([p.id, lines]);
-    addToCart({ key, id: p.id, name: p.name, photo: p.photos?.[0] || null, qty, max, price, lines, sale_type: p.sale_type || "unit", kit_qty: p.kit_qty || null, sale_note: p.sale_note || "" });
+    addToCart({ key, id: p.id, name: p.name, photo: p.photos?.[0] || null, qty, max, price, lines, sale_type: p.sale_type || "unit", kit_qty: kit ? kitQty : p.kit_qty || null, kit_unit: kitUnit(p), sale_note: p.sale_note || "" });
     setAdded(true); setErr("");
   }
 
@@ -112,6 +119,16 @@ export default function ProductView({ settings: s, product: p, categoryName, pre
           </div>
           {!available && <p className="unavail">Produto indisponível no momento.</p>}
 
+          {kits.length > 1 && (
+            <fieldset className="pick">
+              <legend>Quantidade do kit</legend>
+              <div className="pills">{kits.map((o, i) => (
+                <button key={i} className={kitIdx === i ? "on" : ""} onClick={() => { setKitIdx(i); setErr(""); setAdded(false); }}>
+                  {o.qty} {kitUnit(p)}{o.price !== "" && o.price != null && <small>{brl(o.price)}</small>}
+                </button>
+              ))}</div>
+            </fieldset>
+          )}
           {groups.map((g, gi) => (
             <fieldset key={gi} className="pick">
               <legend>{g.name}</legend>
@@ -152,7 +169,7 @@ export default function ProductView({ settings: s, product: p, categoryName, pre
                 {isKit && (
                   <div className="pills">
                     <button className={mode[fi] !== "each" ? "on" : ""} onClick={() => setMode({ ...mode, [fi]: "single" })}>Mesmo texto para o kit todo</button>
-                    <button className={mode[fi] === "each" ? "on" : ""} onClick={() => setMode({ ...mode, [fi]: "each" })}>Um texto para cada unidade ({p.kit_qty})</button>
+                    <button className={mode[fi] === "each" ? "on" : ""} onClick={() => setMode({ ...mode, [fi]: "each" })}>Um texto para cada uma ({kitQty} {kitUnit(p)})</button>
                   </div>
                 )}
                 {sug.length > 0 && <datalist id={`sug-${fi}`}>{sug.map((x) => <option key={x} value={x} />)}</datalist>}
