@@ -1,7 +1,8 @@
 "use client";
 import { useEffect, useState } from "react";
 import Catalog from "@/components/Catalog";
-import { DAYS, contrast, FONTS, BODY_FONTS, WEIGHT_LABEL, fontsHref } from "@/lib/data";
+import { DAYS, contrast, FONTS, BODY_FONTS, WEIGHT_LABEL, fontsHref, fontFaceCss, titleFamily, bodyFamily } from "@/lib/data";
+import { uploadFont } from "@/lib/supabase";
 import { Toggle, Field, ColorField, ImagePicker, Card } from "./ui";
 
 const SAMPLE = [
@@ -53,7 +54,7 @@ export function TabGeral({ s, set, save, prods, setToast, setTab }) {
   );
 }
 
-export function TabIdentidade({ s, set, setToast, prods, cats }) {
+export function TabIdentidade({ s, set, save, setToast, prods, cats }) {
   const origin = useOrigin();
   const digits = s.whatsapp.replace(/\D/g, "");
   return (
@@ -61,7 +62,8 @@ export function TabIdentidade({ s, set, setToast, prods, cats }) {
       <div>
         <h1 className="ad-h1">Identidade da loja</h1>
         <Card title="Logotipo" desc="Imagens quadradas ficam melhores.">
-          <ImagePicker value={s.logo} onChange={(logo) => set({ logo })} label="Enviar logotipo" square />
+          <ImagePicker value={s.logo} onChange={(logo) => save({ ...s, logo })} label="Enviar logotipo" square />
+          <p className="ad-note">O logotipo é salvo automaticamente assim que termina de enviar.</p>
         </Card>
         <Card title="Informações">
           <div className="ad-grid2">
@@ -90,7 +92,7 @@ export function TabIdentidade({ s, set, setToast, prods, cats }) {
   );
 }
 
-export function TabBanner({ s, set, prods, cats }) {
+export function TabBanner({ s, set, save, prods, cats }) {
   const b = s.banner;
   const setB = (patch) => set({ banner: { ...b, ...patch } });
   return (
@@ -107,7 +109,7 @@ export function TabBanner({ s, set, prods, cats }) {
               <button className={b.type === "image" ? "on" : ""} onClick={() => setB({ type: "image" })}>Imagem</button>
             </div>
             {b.type === "color" ? <ColorField label="Cor de fundo" value={b.color} onChange={(color) => setB({ color })} />
-              : <ImagePicker value={b.image} onChange={(image) => setB({ image })} label="Enviar imagem do banner" />}
+              : <ImagePicker value={b.image} onChange={(image) => save({ ...s, banner: { ...b, image } })} label="Enviar imagem do banner" />}
             {b.type === "image" && <p className="ad-note">Use uma imagem horizontal (ex.: 1600 × 600 px). Ela é recortada no centro para caber no celular e no computador.</p>}
           </Card>
         )}
@@ -130,11 +132,16 @@ export function TabCores({ s, set, prods, cats }) {
   const setF = (patch) => set({ fonts: { ...f, ...patch } });
   const r = contrast(c.text, c.background);
   const rt = contrast(c.title || c.primary, c.background);
-  const weights = FONTS[f.title] || [400];
-  function pickTitle(t) {
-    const ws = FONTS[t];
-    const w = ws.includes(Number(f.titleWeight)) ? f.titleWeight : String(ws.filter((x) => x <= 700).pop());
-    setF({ title: t, titleWeight: w });
+  const native = f.titleFile ? [400] : FONTS[f.title] || [400];
+  const weights = [400, 500, 600, 700, 800];
+  const pickTitle = (t) => setF({ title: t });
+  const [fontErr, setFontErr] = useState("");
+  const [fontBusy, setFontBusy] = useState("");
+  async function sendFont(e, key) {
+    const file = e.target.files?.[0]; e.target.value = ""; if (!file) return;
+    setFontErr(""); setFontBusy(key);
+    try { setF({ [key]: await uploadFont(file), [key + "Name"]: file.name.replace(/\.[^.]+$/, "") }); } catch (x) { setFontErr(x.message); }
+    setFontBusy("");
   }
   return (
     <div className="ad-split">
@@ -156,27 +163,39 @@ export function TabCores({ s, set, prods, cats }) {
         </Card>
         <Card title="Fontes" desc="Uma fonte para títulos e subtítulos (nome da loja, nome do produto, seções) e outra para os demais textos.">
           <link rel="stylesheet" href={fontsHref(Object.keys(FONTS))} />
+          {fontFaceCss(f) && <style dangerouslySetInnerHTML={{ __html: fontFaceCss(f) }} />}
           <div className="ad-grid2">
             <Field label="Fonte dos títulos e subtítulos">
-              <select value={f.title} onChange={(e) => pickTitle(e.target.value)}>
+              <select value={f.titleFile ? "__file" : f.title} onChange={(e) => e.target.value !== "__file" && setF({ title: e.target.value, titleFile: "" })}>
+                {f.titleFile && <option value="__file">{f.titleFileName || "Fonte enviada"} (arquivo)</option>}
                 {Object.keys(FONTS).map((n) => <option key={n} value={n}>{n}</option>)}
               </select>
             </Field>
-            <Field label="Espessura dos títulos" hint={weights.length === 1 ? "Esta fonte só tem espessura normal. Para títulos em negrito, escolha outra." : "Negrito destaca mais os títulos."}>
-              <select value={f.titleWeight} onChange={(e) => setF({ titleWeight: e.target.value })} disabled={weights.length === 1}>
+            <Field label="Espessura dos títulos" hint={!native.includes(Number(f.titleWeight)) ? "Esta fonte não tem essa espessura própria; o navegador engrossa as letras automaticamente." : "Negrito destaca mais os títulos."}>
+              <select value={f.titleWeight} onChange={(e) => setF({ titleWeight: e.target.value })}>
                 {weights.map((w) => <option key={w} value={String(w)}>{WEIGHT_LABEL[w]}</option>)}
               </select>
             </Field>
             <Field label="Fonte dos textos">
-              <select value={f.body} onChange={(e) => setF({ body: e.target.value })}>
+              <select value={f.bodyFile ? "__file" : f.body} onChange={(e) => e.target.value !== "__file" && setF({ body: e.target.value, bodyFile: "" })}>
+                {f.bodyFile && <option value="__file">{f.bodyFileName || "Fonte enviada"} (arquivo)</option>}
                 {BODY_FONTS.map((n) => <option key={n} value={n}>{n}</option>)}
               </select>
             </Field>
           </div>
+          <div className="ad-group">
+            <strong>Usar uma fonte própria (arquivo)</strong>
+            <p className="ad-note">Para fontes que não estão na lista, como as da Canva ou compradas. Envie o arquivo .ttf, .otf, .woff ou .woff2 — só use fontes que você tem licença para usar na internet.</p>
+            <div className="ad-row">
+              <label className="ad-btn ghost">{fontBusy === "titleFile" ? "Enviando…" : "Enviar fonte dos títulos"}<input type="file" hidden accept=".ttf,.otf,.woff,.woff2" onChange={(e) => sendFont(e, "titleFile")} /></label>
+              <label className="ad-btn ghost">{fontBusy === "bodyFile" ? "Enviando…" : "Enviar fonte dos textos"}<input type="file" hidden accept=".ttf,.otf,.woff,.woff2" onChange={(e) => sendFont(e, "bodyFile")} /></label>
+            </div>
+            {fontErr && <p className="ad-err">{fontErr}</p>}
+          </div>
           <div className="ad-font-sample">
-            <p style={{ fontFamily: `'${f.title}', serif`, fontWeight: f.titleWeight, color: c.title || c.primary, fontSize: "1.5rem" }}>Agenda personalizada</p>
-            <p style={{ fontFamily: `'${f.title}', serif`, fontWeight: f.titleWeight, color: c.title || c.primary, fontSize: "1.05rem" }}>Miolo</p>
-            <p style={{ fontFamily: `'${f.body}', sans-serif`, color: c.text, lineHeight: 1.5 }}>Capa dura personalizada no tema que você escolher, com espiral wire-o e elástico.</p>
+            <p style={{ fontFamily: `'${titleFamily(f)}', serif`, fontWeight: f.titleWeight, color: c.title || c.primary, fontSize: "1.5rem" }}>Agenda personalizada</p>
+            <p style={{ fontFamily: `'${titleFamily(f)}', serif`, fontWeight: f.titleWeight, color: c.title || c.primary, fontSize: "1.05rem" }}>Miolo</p>
+            <p style={{ fontFamily: `'${bodyFamily(f)}', sans-serif`, color: c.text, lineHeight: 1.5 }}>Capa dura personalizada no tema que você escolher, com espiral wire-o e elástico.</p>
           </div>
         </Card>
       </div>

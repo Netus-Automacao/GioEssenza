@@ -1,6 +1,6 @@
 import "./globals.css";
 import { getSettings } from "@/lib/server";
-import { DEFAULT_SETTINGS, fontsHref } from "@/lib/data";
+import { DEFAULT_SETTINGS, fontsHref, fontFaceCss } from "@/lib/data";
 
 export async function generateMetadata() {
   try {
@@ -19,6 +19,7 @@ export default async function RootLayout({ children }) {
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
         <link rel="stylesheet" href={fontsHref([f.title, f.body, "Figtree", "Marcellus"])} />
+        {fontFaceCss(f) && <style dangerouslySetInnerHTML={{ __html: fontFaceCss(f) }} />}
       </head>
       <body>{children}</body>
     </html>
