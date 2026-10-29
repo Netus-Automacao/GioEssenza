@@ -448,6 +448,13 @@ export default function Products({ cats, prods, setProds, setToast, settings, st
     if (error) return setToast(error.message);
     setProds(prods.map((x) => (x.id === p.id ? data : x))); setToast(msg);
   }
+  async function duplicate(p) {
+    const { id, created_at, ...rest } = p;
+    const copy = { ...rest, name: `${p.name} (cópia)`, active: false, featured: false, position: (p.position || 0) + 1 };
+    const { data, error } = await supabase.from("products").insert(copy).select().single();
+    if (error) return setToast(error.message);
+    setProds([...prods, data]); setToast("Produto duplicado (inativo). Edite e publique quando quiser.");
+  }
   async function del(p) {
     if (!confirm(`Excluir “${p.name}”? Essa ação não pode ser desfeita.`)) return;
     const { error } = await supabase.from("products").delete().eq("id", p.id);
@@ -472,25 +479,37 @@ export default function Products({ cats, prods, setProds, setToast, settings, st
       )}
       <Card title={`${prods.length} produtos — ${prods.filter((p) => p.active).length} ativos`} aside={<input className="ad-input" placeholder="Buscar" value={filter} onChange={(e) => setFilter(e.target.value)} />}>
         {list.length === 0 ? <p className="ad-muted">Nenhum produto. Clique em “Novo produto” para cadastrar o primeiro.</p> : (
-          <ul className="ad-plist">
-            {list.map((p) => (
-              <li key={p.id} className={p.active ? "" : "inactive"}>
-                <div className="ad-thumb">{p.photos?.[0] ? <img src={p.photos[0]} alt="" /> : <span>{p.name[0]}</span>}</div>
-                <div className="ad-pinfo">
-                  <strong>{p.name}{p.featured && <span className="ad-pill star">Destaque</span>}{hasPromo(p) && <span className="ad-pill star">Promoção</span>}{!p.active && <span className="ad-pill">Inativo</span>}</strong>
-                  <span className="ad-muted">{catName(p.category_id)}{saleBadge(p) && ` — ${saleBadge(p)}`}{p.stock_enabled && ` — estoque: ${p.stock}`} — {(p.photos || []).length} foto(s)</span>
-                  <span>{hasPromo(p) ? <><b>{brl(p.promo_price)}</b> <s className="ad-muted">{brl(p.price)}</s></> : brl(p.price)}</span>
-                </div>
-                <div className="ad-pactions">
-                  <button className="ad-btn ghost sm" onClick={() => setEditing(p)}>Editar</button>
-                  <button className="ad-btn ghost sm" onClick={() => patch(p, { active: !p.active }, p.active ? "Produto desativado" : "Produto publicado")}>{p.active ? "Desativar" : "Publicar"}</button>
-                  <button className="ad-btn ghost sm" onClick={() => patch(p, { featured: !p.featured }, p.featured ? "Destaque removido" : "Produto destacado")}>{p.featured ? "Tirar destaque" : "Destacar"}</button>
-                  {p.active && <a className="ad-btn ghost sm" href={`/produto/${p.id}`} target="_blank" rel="noreferrer">Ver no catálogo</a>}
-                  <button className="ad-btn ghost sm danger" onClick={() => del(p)}>Excluir</button>
-                </div>
-              </li>
-            ))}
-          </ul>
+          <div>
+            {[...cats.map((c) => ({ id: c.id, name: c.name })), { id: null, name: "Sem categoria" }].map((g) => {
+              const items = list.filter((p) => (g.id ? p.category_id === g.id : !cats.some((c) => c.id === p.category_id)));
+              if (!items.length) return null;
+              return (
+                <section key={g.id || "none"} className="ad-pgroup">
+                  <h3>{g.name} <span className="ad-muted">({items.length})</span></h3>
+                  <ul className="ad-plist">
+                    {items.map((p) => (
+                      <li key={p.id} className={p.active ? "" : "inactive"}>
+                        <div className="ad-thumb">{p.photos?.[0] ? <img src={p.photos[0]} alt="" /> : <span>{p.name[0]}</span>}</div>
+                        <div className="ad-pinfo">
+                          <strong>{p.name}{p.featured && <span className="ad-pill star">Destaque</span>}{hasPromo(p) && <span className="ad-pill star">Promoção</span>}{!p.active && <span className="ad-pill">Inativo</span>}</strong>
+                          <span className="ad-muted">{saleBadge(p) && `${saleBadge(p)} — `}{p.stock_enabled && `estoque: ${p.stock} — `}{(p.photos || []).length} foto(s)</span>
+                          <span>{hasPromo(p) ? <><b>{brl(p.promo_price)}</b> <s className="ad-muted">{brl(p.price)}</s></> : brl(p.price)}</span>
+                        </div>
+                        <div className="ad-pactions">
+                          <button className="ad-btn ghost sm" onClick={() => setEditing(p)}>Editar</button>
+                          <button className="ad-btn ghost sm" onClick={() => duplicate(p)}>Duplicar</button>
+                          <button className="ad-btn ghost sm" onClick={() => patch(p, { active: !p.active }, p.active ? "Produto desativado" : "Produto publicado")}>{p.active ? "Desativar" : "Publicar"}</button>
+                          <button className="ad-btn ghost sm" onClick={() => patch(p, { featured: !p.featured }, p.featured ? "Destaque removido" : "Produto destacado")}>{p.featured ? "Tirar destaque" : "Destacar"}</button>
+                          {p.active && <a className="ad-btn ghost sm" href={`/produto/${p.id}`} target="_blank" rel="noreferrer">Ver no catálogo</a>}
+                          <button className="ad-btn ghost sm danger" onClick={() => del(p)}>Excluir</button>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              );
+            })}
+          </div>
         )}
       </Card>
     </>

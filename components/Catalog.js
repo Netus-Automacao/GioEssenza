@@ -59,6 +59,12 @@ export default function Catalog({ settings: s, categories = [], products = [], p
   const [open, setOpen] = useState(null);
   const [copied, setCopied] = useState(false);
   const top = useRef();
+  // abre direto na categoria quando o endereço tem ?c=...
+  useEffect(() => {
+    if (preview) return;
+    const c = new URLSearchParams(window.location.search).get("c");
+    if (c) setCat(c);
+  }, []);
 
   useEffect(() => {
     const f = () => setOpen(openStatus(s.hours));
@@ -79,6 +85,7 @@ export default function Catalog({ settings: s, categories = [], products = [], p
 
   function choose(id) {
     setCat(id); setQ("");
+    if (!preview) window.history.replaceState(null, "", id ? `/?c=${id}` : "/");
     if (!preview) setTimeout(() => top.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 30);
   }
   async function share() {
@@ -116,16 +123,12 @@ export default function Catalog({ settings: s, categories = [], products = [], p
   else body = (
     <>
       <div className="cat-grid">
-        {cats.map((c) => {
-          const ph = c.items.find((p) => p.photos?.[0])?.photos[0];
-          return (
-            <button key={c.id} className="cat-tile" onClick={() => choose(c.id)}>
-              <span className="cat-tile-img">{ph ? <img src={ph} alt="" /> : <span className="ph">{c.name.charAt(0)}</span>}</span>
-              <span className="cat-tile-name">{c.name}</span>
-              <span className="cat-tile-count">{c.items.length} {c.items.length === 1 ? "produto" : "produtos"}</span>
-            </button>
-          );
-        })}
+        {cats.map((c) => (
+          <button key={c.id} className="cat-tile" onClick={() => choose(c.id)}>
+            <span className="cat-tile-name">{c.name}</span>
+            <span className="cat-tile-count">{c.items.length} {c.items.length === 1 ? "produto" : "produtos"}</span>
+          </button>
+        ))}
       </div>
       <button className="btn ghost block" onClick={() => choose("all")}>Ver todos os produtos</button>
     </>

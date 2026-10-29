@@ -401,3 +401,10 @@ button,input,select,textarea{font:inherit;color:inherit}
 .gal-count{font-size:.72rem;bottom:8px;right:8px}
 .social{display:flex;flex-wrap:wrap;gap:.5rem;justify-content:center;margin-top:.8rem}
 .social-btn{display:inline-flex;align-items:center;gap:.4rem;padding:.55rem 1rem;border-radius:999px;background:var(--soft);color:var(--primary);font-weight:700;text-decoration:none;font-size:.9rem}
+
+/* v3.7: categorias só como botões; grupos no painel */
+.cat-tile{padding:1.1rem .9rem;min-height:84px;justify-content:center;box-shadow:0 3px 10px rgba(0,0,0,.12)}
+.cat-tile-name{padding:0;font-size:1.1rem}
+.cat-tile-count{padding:.2rem 0 0}
+.ad-pgroup+.ad-pgroup{margin-top:1.4rem}
+.ad-pgroup h3{margin:0 0 .3rem;font-size:1rem;padding-bottom:.4rem;border-bottom:2px solid var(--ad-soft)}

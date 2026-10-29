@@ -86,7 +86,13 @@ export default function ProductView({ settings: s, product: p, categoryName, pre
   return (
     <main className={`cat${preview ? " is-preview" : ""}`} style={cssVars(s.colors, s.fonts)}>
       <nav className="pbar">
-        <Back href="/" className="nav-btn">Catálogo</Back>
+        {preview ? <span className="nav-btn">Voltar</span> : (
+          <button className="nav-btn" onClick={() => {
+            const same = document.referrer && new URL(document.referrer).host === window.location.host;
+            if (same && window.history.length > 1) window.history.back();
+            else window.location.href = p.category_id ? `/?c=${p.category_id}` : "/";
+          }}>Voltar</button>
+        )}
         {!preview && <CartButton />}
       </nav>
       <article className="prod">
