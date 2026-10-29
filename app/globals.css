@@ -563,3 +563,4 @@ button,input,select,textarea{font:inherit;color:inherit}
 .cart-img{box-shadow:0 4px 12px var(--sh1)}
 .hero-logo{box-shadow:0 0 0 6px rgba(255,255,255,.35),0 12px 28px var(--sh1)}
 .cat-tile{box-shadow:0 4px 12px var(--sh2)}
+.crop-box.round::after{content:"";position:absolute;inset:0;border-radius:50%;box-shadow:0 0 0 999px rgba(0,0,0,.45);pointer-events:none}

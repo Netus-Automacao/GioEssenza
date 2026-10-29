@@ -64,8 +64,12 @@ export function TabIdentidade({ s, set, save, setToast, prods, cats }) {
       <div>
         <h1 className="ad-h1">Identidade da loja</h1>
         <Card title="Logotipo" desc="Imagens quadradas ficam melhores.">
-          <ImagePicker value={s.logo} onChange={(logo) => save({ ...s, logo })} label="Enviar logotipo" square />
-          <p className="ad-note">O logotipo é salvo automaticamente assim que termina de enviar.</p>
+          <CropPhoto value={s.logo} original={s.logo_original} ratio={1} round label="Enviar logotipo"
+            onSave={(logo, logo_original) => save({ ...s, logo, logo_original })} />
+          <p className="ad-note">Depois de escolher a imagem, enquadre dentro do círculo. O logotipo é salvo automaticamente.</p>
+          <Field label={`Tamanho do logo no catálogo: ${Number(s.logo_size) || 185}px`} hint="Arraste e veja na prévia ao lado. Depois toque em Salvar alterações.">
+            <input type="range" min="100" max="260" step="5" value={Number(s.logo_size) || 185} onChange={(e) => set({ logo_size: Number(e.target.value) })} />
+          </Field>
         </Card>
         <Card title="Informações">
           <div className="ad-grid2">
@@ -370,6 +374,36 @@ export function TabPagamento({ s, set }) {
         </Field>
       </Card>
     </>
+  );
+}
+
+function CropPhoto({ value, original, ratio, round, onSave, label = "Enviar foto" }) {
+  const [job, setJob] = useState(null);
+  const [err, setErr] = useState("");
+  async function done(cropped) {
+    const url = await uploadImage(cropped);
+    const orig = job.file ? await uploadImage(job.file) : original || value;
+    onSave(url, orig);
+    if (job.file) URL.revokeObjectURL(job.src);
+    setJob(null);
+  }
+  return (
+    <div className="ad-img">
+      <div className="ad-img-prev" style={{ width: round ? 120 : 140, aspectRatio: `${1}/${ratio}`, borderRadius: round ? "50%" : 10 }}>{value ? <img src={value} alt="" /> : <span>Sem imagem</span>}</div>
+      <div className="ad-img-actions">
+        <label className="ad-btn">{value ? "Trocar imagem" : label}
+          <input type="file" hidden accept="image/jpeg,image/png,image/webp" onChange={(e) => {
+            const f = e.target.files?.[0]; e.target.value = "";
+            if (!f) return; if (!/^image\/(jpeg|png|webp)$/.test(f.type)) return setErr("Use JPG, PNG ou WebP.");
+            setErr(""); setJob({ src: URL.createObjectURL(f), file: f });
+          }} />
+        </label>
+        {value && <button type="button" className="ad-btn ghost" onClick={() => setJob({ src: original || value })}>Enquadrar</button>}
+        {value && <button type="button" className="ad-btn ghost" onClick={() => onSave("", "")}>Remover</button>}
+        {err && <small className="ad-err">{err}</small>}
+      </div>
+      {job && <Cropper src={job.src} ratio={ratio} round={round} onCancel={() => setJob(null)} onDone={done} />}
+    </div>
   );
 }
 

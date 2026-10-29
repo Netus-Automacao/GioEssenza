@@ -93,7 +93,7 @@ export default function Catalog({ settings: s, categories = [], products = [], p
   const results = q ? visible.filter((p) => `${p.name} ${p.description || ""}`.toLowerCase().includes(q.toLowerCase())) : [];
   const current = cats.find((c) => c.id === cat);
   const wa = s.whatsapp_enabled && s.whatsapp;
-  const vars = cssVars(s.colors, s.fonts, s.shadow);
+  const vars = { ...cssVars(s.colors, s.fonts, s.shadow), "--logo": `${Number(s.logo_size) || 185}px` };
 
   function choose(id) {
     setCat(id); setQ("");

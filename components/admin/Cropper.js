@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 const RATIO = 4 / 3; // altura ÷ largura → formato retangular 3:4, igual à câmera do celular
 const MAX_W = 1600;  // largura máxima salva (mantém a qualidade)
 
-export default function Cropper({ src, onCancel, onDone, step, ratio = RATIO }) {
+export default function Cropper({ src, onCancel, onDone, step, ratio = RATIO, round = false }) {
   const R = ratio;
   const box = useRef();
   const drag = useRef(null);
@@ -69,7 +69,7 @@ export default function Cropper({ src, onCancel, onDone, step, ratio = RATIO }) 
       <div className="crop-panel">
         <h2>Enquadrar foto{step ? ` (${step})` : ""}</h2>
         <p className="ad-muted">Arraste a foto com o dedo para escolher o que aparece. Use o zoom para aproximar. É assim que o cliente vai ver.</p>
-        <div className="crop-box" ref={box} style={{ height: H }} onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up}>
+        <div className={`crop-box${round ? " round" : ""}`} ref={box} style={{ height: H }} onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up}>
           {img ? <img src={src} alt="" draggable={false} style={{ width: dw, height: dh, transform: `translate(${pos.x}px, ${pos.y}px)` }} />
             : <span style={{ color: "#fff", padding: "1rem", display: "block" }}>{err || "Carregando…"}</span>}
           <div className="crop-grid" />
