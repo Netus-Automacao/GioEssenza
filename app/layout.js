@@ -1,4 +1,6 @@
 import "./globals.css";
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 import { getSettings } from "@/lib/server";
 import { DEFAULT_SETTINGS, fontsHref, fontFaceCss } from "@/lib/data";
 
