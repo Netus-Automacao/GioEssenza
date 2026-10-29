@@ -13,7 +13,8 @@ export default function ProductView({ settings: s, product: p, categoryName, pre
   const fields = p.custom_fields || [];
   const isKit = p.sale_type === "kit" && Number(p.kit_qty) > 1;
 
-  const [photo, setPhoto] = useState(p.photos?.[0] || null);
+  const [idx, setIdx] = useState(0);
+  const [touch, setTouch] = useState(null);
   const [sel, setSel] = useState({});
   const [opt, setOpt] = useState({});
   const [txt, setTxt] = useState({});         // texto de opção adicional "g-c"
@@ -33,7 +34,7 @@ export default function ProductView({ settings: s, product: p, categoryName, pre
 
   function pickValue(gi, vi) {
     setSel({ ...sel, [gi]: vi }); setErr(""); setAdded(false);
-    const ph = groups[gi].values[vi].photo; if (ph) setPhoto(ph);
+    const ph = groups[gi].values[vi].photo; if (ph && photos.indexOf(ph) >= 0) setIdx(photos.indexOf(ph));
   }
   function toggleChoice(gi, ci) {
     const g = options[gi]; const cur = opt[gi] || [];
@@ -73,20 +74,33 @@ export default function ProductView({ settings: s, product: p, categoryName, pre
   }
 
   const Back = preview ? "span" : Link;
+  const n = photos.length;
+  const go = (d) => n > 1 && setIdx((idx + d + n) % n);
   return (
-    <main className={`cat${preview ? " is-preview" : ""}`} style={cssVars(s.colors)}>
+    <main className={`cat${preview ? " is-preview" : ""}`} style={cssVars(s.colors, s.fonts)}>
       <nav className="pbar">
-        <Back href="/" className="back">← Catálogo</Back>
+        <Back href="/" className="nav-btn">Catálogo</Back>
         {!preview && <CartButton />}
       </nav>
       <article className="prod">
         <div className="gallery">
-          <div className="gallery-main">{photo ? <img src={photo} alt={p.name} /> : <span className="ph big">{p.name?.charAt(0)}</span>}</div>
-          {photos.length > 1 && (
+          <div className="gallery-main" onTouchStart={(e) => setTouch(e.touches[0].clientX)}
+            onTouchEnd={(e) => { if (touch !== null) { const dx = e.changedTouches[0].clientX - touch; if (Math.abs(dx) > 40) go(dx < 0 ? 1 : -1); setTouch(null); } }}>
+            {photos[idx] ? <img src={photos[idx]} alt={`${p.name} — foto ${idx + 1}`} /> : <span className="ph big">{p.name?.charAt(0)}</span>}
+            {n > 1 && (
+              <>
+                <button className="gal-nav prev" onClick={() => go(-1)} aria-label="Foto anterior">‹</button>
+                <button className="gal-nav next" onClick={() => go(1)} aria-label="Próxima foto">›</button>
+                <span className="gal-count">{idx + 1} / {n}</span>
+              </>
+            )}
+          </div>
+          {n > 1 && (
             <div className="thumbs">{photos.map((u, i) => (
-              <button key={u} className={u === photo ? "on" : ""} onClick={() => setPhoto(u)} aria-label={`Foto ${i + 1}`}><img src={u} alt="" /></button>
+              <button key={u} className={i === idx ? "on" : ""} onClick={() => setIdx(i)} aria-label={`Ver foto ${i + 1}`}><img src={u} alt="" /></button>
             ))}</div>
           )}
+          {n > 1 && <p className="hint center">Toque nas miniaturas ou deslize a foto para ver todas.</p>}
         </div>
         <div className="prod-info">
           {categoryName && <p className="pcat">{categoryName}</p>}

@@ -51,9 +51,9 @@ export default function Categories({ cats, setCats, prods, setToast, setTab }) {
                 <input defaultValue={c.name} onBlur={(e) => e.target.value.trim() && e.target.value.trim() !== c.name && update(c, { name: e.target.value.trim() }, "Categoria renomeada")} aria-label="Nome da categoria" />
                 <span className="ad-muted">{count(c.id)} produtos</span>
                 <button className="ad-btn ghost sm" onClick={() => update(c, { active: c.active === false }, c.active === false ? "Categoria ativada" : "Categoria desativada")}>{c.active === false ? "Ativar" : "Desativar"}</button>
-                <button className="ad-icon" onClick={() => reorder(i, -1)} aria-label="Subir">↑</button>
-                <button className="ad-icon" onClick={() => reorder(i, 1)} aria-label="Descer">↓</button>
-                <button className="ad-icon danger" onClick={() => del(c)} aria-label="Excluir">✕</button>
+                <button className="ad-btn ghost sm" disabled={i === 0} onClick={() => reorder(i, -1)}>Subir</button>
+                <button className="ad-btn ghost sm" disabled={i === cats.length - 1} onClick={() => reorder(i, 1)}>Descer</button>
+                <button className="ad-btn ghost sm danger" onClick={() => del(c)}>Excluir</button>
               </li>
             ))}
           </ul>

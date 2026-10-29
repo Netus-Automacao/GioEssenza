@@ -8,7 +8,7 @@ import Products from "./Products";
 import Categories from "./Categories";
 
 const TABS = [
-  ["dashboard", "Geral"], ["loja", "Identidade da loja"], ["banner", "Banner de destaque"], ["cores", "Cores"],
+  ["dashboard", "Geral"], ["loja", "Identidade da loja"], ["banner", "Banner de destaque"], ["cores", "Cores e fontes"],
   ["horarios", "Horário de funcionamento"], ["entrega", "Entrega e retirada"], ["categorias", "Categorias"], ["produtos", "Produtos"],
 ];
 const go = (t) => window.history.pushState(null, "", `/admin/${t}`);

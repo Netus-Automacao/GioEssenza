@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Catalog from "@/components/Catalog";
-import { DAYS, contrast } from "@/lib/data";
+import { DAYS, contrast, FONTS, BODY_FONTS, WEIGHT_LABEL, fontsHref } from "@/lib/data";
 import { Toggle, Field, ColorField, ImagePicker, Card } from "./ui";
 
 const SAMPLE = [
@@ -125,23 +125,59 @@ export function TabBanner({ s, set, prods, cats }) {
 
 export function TabCores({ s, set, prods, cats }) {
   const c = s.colors;
+  const f = s.fonts;
   const setC = (patch) => set({ colors: { ...c, ...patch } });
+  const setF = (patch) => set({ fonts: { ...f, ...patch } });
   const r = contrast(c.text, c.background);
+  const rt = contrast(c.title || c.primary, c.background);
+  const weights = FONTS[f.title] || [400];
+  function pickTitle(t) {
+    const ws = FONTS[t];
+    const w = ws.includes(Number(f.titleWeight)) ? f.titleWeight : String(ws.filter((x) => x <= 700).pop());
+    setF({ title: t, titleWeight: w });
+  }
   return (
     <div className="ad-split">
       <div>
-        <h1 className="ad-h1">Cores</h1>
+        <h1 className="ad-h1">Cores e fontes</h1>
         <Card title="Cores do catálogo" desc="Escolha no seletor ou digite o código hexadecimal (#55663C) ou RGB (85, 102, 60).">
           <div className="ad-grid2">
             <ColorField label="Cor principal" hint="Botões, preços, categorias e navegação." value={c.primary} onChange={(primary) => setC({ primary })} />
             <ColorField label="Cor de destaque" hint="Degradê da capa e elementos de destaque." value={c.accent} onChange={(accent) => setC({ accent })} />
             <ColorField label="Cor de fundo" hint="Fundo das páginas e seções." value={c.background} onChange={(background) => setC({ background })} />
-            <ColorField label="Cor do texto" hint="Títulos, descrições e bordas." value={c.text} onChange={(text) => setC({ text })} />
+            <ColorField label="Cor do texto" hint="Descrições, textos e bordas." value={c.text} onChange={(text) => setC({ text })} />
+            <ColorField label="Cor dos títulos" hint="Nome da loja, nome dos produtos e subtítulos." value={c.title || c.primary} onChange={(title) => setC({ title })} />
           </div>
           <div className="ad-gradient" style={{ background: `linear-gradient(120deg, ${c.primary}, ${c.accent})` }}><span>Degradê principal + destaque</span></div>
           <p className={`ad-note${r < 4.5 ? " warn" : ""}`}>
             Contraste entre texto e fundo: {r.toFixed(1)}:1 — {r >= 7 ? "excelente" : r >= 4.5 ? "boa leitura" : "baixo; escolha um texto mais escuro ou um fundo mais claro"}.
           </p>
+          {rt < 3 && <p className="ad-note warn">A cor dos títulos está muito clara para o fundo. Escolha um tom mais escuro.</p>}
+        </Card>
+        <Card title="Fontes" desc="Uma fonte para títulos e subtítulos (nome da loja, nome do produto, seções) e outra para os demais textos.">
+          <link rel="stylesheet" href={fontsHref(Object.keys(FONTS))} />
+          <div className="ad-grid2">
+            <Field label="Fonte dos títulos e subtítulos">
+              <select value={f.title} onChange={(e) => pickTitle(e.target.value)}>
+                {Object.keys(FONTS).map((n) => <option key={n} value={n}>{n}</option>)}
+              </select>
+            </Field>
+            <Field label="Espessura dos títulos" hint={weights.length === 1 ? "Esta fonte só tem espessura normal. Para títulos em negrito, escolha outra." : "Negrito destaca mais os títulos."}>
+              <select value={f.titleWeight} onChange={(e) => setF({ titleWeight: e.target.value })} disabled={weights.length === 1}>
+                {weights.map((w) => <option key={w} value={String(w)}>{WEIGHT_LABEL[w]}</option>)}
+              </select>
+            </Field>
+            <Field label="Fonte dos textos">
+              <select value={f.body} onChange={(e) => setF({ body: e.target.value })}>
+                {BODY_FONTS.map((n) => <option key={n} value={n}>{n}</option>)}
+              </select>
+            </Field>
+          </div>
+          <div className="ad-font-sample">
+            <p style={{ fontFamily: `'${f.title}', serif`, fontWeight: f.titleWeight, color: c.title || c.primary, fontSize: "1.5rem" }}>Agenda personalizada</p>
+            <p style={{ fontFamily: `'${f.title}', serif`, fontWeight: f.titleWeight, color: c.title || c.primary, fontSize: "1.05rem" }}>Miolo</p>
+            <p style={{ fontFamily: `'${f.body}', sans-serif`, color: c.text, lineHeight: 1.5 }}>Capa dura personalizada no tema que você escolher, com espiral wire-o e elástico.</p>
+          </div>
         </Card>
       </div>
       <Preview s={s} prods={prods} cats={cats} />

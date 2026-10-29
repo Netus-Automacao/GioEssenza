@@ -27,8 +27,8 @@ export default function CartView({ settings: s }) {
   }
 
   return (
-    <main className="cat" style={cssVars(s.colors)}>
-      <nav className="pbar"><Link href="/" className="back">← Continuar comprando</Link></nav>
+    <main className="cat" style={cssVars(s.colors, s.fonts)}>
+      <nav className="pbar"><Link href="/" className="nav-btn">Catálogo</Link></nav>
       <section className="block cart">
         <h1 className="sec-title">Seu carrinho</h1>
         {items === null ? null : items.length === 0 ? (
@@ -66,6 +66,7 @@ export default function CartView({ settings: s }) {
             <div className="cart-total"><span>Total dos produtos</span><strong>{brl(total)}</strong></div>
             <p className="hint">Valores sem entrega. O pedido é confirmado no atendimento pelo WhatsApp.</p>
             {wa && <button className="btn block" onClick={send}><WaIcon /> Enviar pedido pelo WhatsApp</button>}
+            <Link href="/" className="btn ghost block">Continuar comprando</Link>
             {sent && (
               <p className="ok">Confirme o envio da mensagem no WhatsApp. Já enviou?{" "}
                 <button className="link-btn" onClick={() => { clearCart(); setSent(false); }}>Esvaziar carrinho</button></p>

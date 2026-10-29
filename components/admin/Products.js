@@ -3,6 +3,7 @@ import { useRef, useState } from "react";
 import { supabase, uploadImage } from "@/lib/supabase";
 import { brl, hasPromo, saleBadge } from "@/lib/data";
 import ProductView from "@/components/ProductView";
+import Cropper from "./Cropper";
 import { Toggle, Field, Card } from "./ui";
 
 const MAX_PHOTOS = 10;
@@ -12,26 +13,41 @@ const EMPTY = { name: "", category_id: "", description: "", photos: [], price: "
 const move = (arr, i, d) => { const a = [...arr]; const j = i + d; if (j < 0 || j >= a.length) return a; [a[i], a[j]] = [a[j], a[i]]; return a; };
 
 /* ---------------- Fotos ---------------- */
-function Photos({ photos, onChange }) {
-  const add = useRef(); const rep = useRef(); const [repIdx, setRepIdx] = useState(null);
-  const [busy, setBusy] = useState(false); const [err, setErr] = useState("");
-  async function upload(files, idx = null) {
-    setErr("");
-    if (idx === null) {
-      const room = MAX_PHOTOS - photos.length;
-      if (room <= 0) return setErr("Limite máximo de 10 imagens atingido.");
-      if (files.length > room) { setErr(`Limite máximo de 10 imagens atingido. Só ${room} foram enviadas.`); files = files.slice(0, room); }
-    }
-    setBusy(true);
-    try {
-      const urls = [];
-      for (const f of files) urls.push(await uploadImage(f));
-      if (idx === null) onChange([...photos, ...urls]);
-      else onChange(photos.map((u, i) => (i === idx ? urls[0] : u)));
-    } catch (x) { setErr(x.message); }
-    setBusy(false);
-  }
+// originals: { urlDaFotoEnquadrada: urlDaFotoOriginal } — permite reenquadrar depois sem perder área
+function Photos({ photos, originals, onChange }) {
+  const add = useRef(); const rep = useRef();
+  const [queue, setQueue] = useState([]);       // [{ src, file, mode: "add" | "replace" | "adjust", idx }]
+  const [err, setErr] = useState("");
   const full = photos.length >= MAX_PHOTOS;
+  const job = queue[0];
+
+  function pickFiles(files, mode, idx = null) {
+    setErr("");
+    files = [...files].filter((f) => /^image\/(jpeg|png|webp)$/.test(f.type));
+    if (!files.length) return setErr("Use imagens JPG, PNG ou WebP.");
+    if (mode === "add") {
+      const room = MAX_PHOTOS - photos.length - queue.filter((j) => j.mode === "add").length;
+      if (room <= 0) return setErr("Limite máximo de 10 imagens atingido.");
+      if (files.length > room) { setErr(`Limite máximo de 10 imagens atingido. Só ${room} serão adicionadas.`); files = files.slice(0, room); }
+    }
+    setQueue((q) => [...q, ...files.map((file) => ({ file, src: URL.createObjectURL(file), mode, idx }))]);
+  }
+
+  async function done(cropped) {
+    const j = job;
+    const url = await uploadImage(cropped);
+    const orig = j.file ? await uploadImage(j.file) : (originals[photos[j.idx]] || photos[j.idx]);
+    const nextOrig = { ...originals, [url]: orig };
+    let next;
+    if (j.mode === "add") next = [...photos, url];
+    else next = photos.map((u, i) => (i === j.idx ? url : u));
+    onChange(next, nextOrig);
+    if (j.file) URL.revokeObjectURL(j.src);
+    setQueue((q) => q.slice(1));
+  }
+  function cancel() { if (job?.file) URL.revokeObjectURL(job.src); setQueue((q) => q.slice(1)); }
+  const remove = (i) => { const u = photos[i]; const o = { ...originals }; delete o[u]; onChange(photos.filter((_, j) => j !== i), o); };
+
   return (
     <div>
       <p className={`ad-counter${full ? " full" : ""}`}>{photos.length} / {MAX_PHOTOS} imagens{full && " — limite máximo atingido"}</p>
@@ -41,20 +57,22 @@ function Photos({ photos, onChange }) {
             <img src={u} alt="" />
             {i === 0 && <span className="ad-main-tag">Principal</span>}
             <figcaption>
-              {i > 0 && <button type="button" onClick={() => onChange([u, ...photos.filter((_, j) => j !== i)])} title="Tornar principal">★</button>}
-              <button type="button" onClick={() => onChange(move(photos, i, -1))} aria-label="Mover para a esquerda">←</button>
-              <button type="button" onClick={() => onChange(move(photos, i, 1))} aria-label="Mover para a direita">→</button>
-              <button type="button" onClick={() => { setRepIdx(i); rep.current.click(); }}>Trocar</button>
-              <button type="button" onClick={() => onChange(photos.filter((_, j) => j !== i))} aria-label="Excluir">✕</button>
+              <button type="button" onClick={() => setQueue((q) => [...q, { src: originals[u] || u, mode: "adjust", idx: i }])}>Enquadrar</button>
+              <button type="button" onClick={() => { rep.current.dataset.idx = i; rep.current.click(); }}>Trocar</button>
+              <button type="button" disabled={i === 0} onClick={() => onChange(move(photos, i, -1), originals)}>Mover antes</button>
+              <button type="button" disabled={i === photos.length - 1} onClick={() => onChange(move(photos, i, 1), originals)}>Mover depois</button>
+              {i > 0 ? <button type="button" onClick={() => onChange([u, ...photos.filter((_, j) => j !== i)], originals)}>Principal</button> : <button type="button" disabled>—</button>}
+              <button type="button" className="danger" onClick={() => remove(i)}>Excluir</button>
             </figcaption>
           </figure>
         ))}
-        {!full && <button type="button" className="ad-photo-add" onClick={() => add.current.click()} disabled={busy}>{busy ? "Enviando…" : "+ Adicionar fotos"}</button>}
+        {!full && <button type="button" className="ad-photo-add" onClick={() => add.current.click()}>+ Adicionar fotos</button>}
       </div>
-      <small className="ad-muted">A primeira foto é a principal; use “Principal” ou as setas para mudar. São fotos de apresentação — não têm relação com a quantidade de um kit.</small>
+      <small className="ad-muted">A primeira foto é a principal. Depois de escolher cada foto, você enquadra antes de salvar. São fotos de apresentação — não têm relação com a quantidade de um kit.</small>
       {err && <p className="ad-err">{err}</p>}
-      <input ref={add} type="file" multiple accept="image/jpeg,image/png,image/webp" hidden onChange={(e) => { upload([...e.target.files]); e.target.value = ""; }} />
-      <input ref={rep} type="file" accept="image/jpeg,image/png,image/webp" hidden onChange={(e) => { if (e.target.files[0]) upload([e.target.files[0]], repIdx); e.target.value = ""; }} />
+      <input ref={add} type="file" multiple accept="image/jpeg,image/png,image/webp" hidden onChange={(e) => { pickFiles(e.target.files, "add"); e.target.value = ""; }} />
+      <input ref={rep} type="file" accept="image/jpeg,image/png,image/webp" hidden onChange={(e) => { pickFiles(e.target.files, "replace", Number(e.target.dataset.idx)); e.target.value = ""; }} />
+      {job && <Cropper key={job.src + queue.length} src={job.src} onCancel={cancel} onDone={done} step={queue.length > 1 ? `faltam ${queue.length}` : ""} />}
     </div>
   );
 }
@@ -283,7 +301,8 @@ function Editor({ initial, cats, settings, onClose, onSaved }) {
     if (options.some((g) => g.choices.some((c) => Number(c.extra) < 0))) return "Acréscimos não podem ser negativos.";
     const custom_fields = p.custom_fields.filter((f) => f.label.trim()).map((f) => ({ ...f, label: f.label.trim() }));
     const sp = p.specs;
-    const specs = { ...sp, acessorios: (sp.acessorios || []).map((a) => a.trim()).filter(Boolean) };
+    const orig = Object.fromEntries(Object.entries(sp._originais || {}).filter(([k]) => p.photos.includes(k)));
+    const specs = { ...sp, _originais: orig, acessorios: (sp.acessorios || []).map((a) => a.trim()).filter(Boolean) };
     return {
       name: p.name.trim(), category_id: p.category_id, description: p.description, photos: p.photos.slice(0, MAX_PHOTOS),
       price, promo_price: promo, featured: p.featured, active, stock_enabled: p.stock_enabled, stock: Math.max(0, parseInt(p.stock) || 0),
@@ -307,7 +326,7 @@ function Editor({ initial, cats, settings, onClose, onSaved }) {
   return (
     <div className="ad-editor">
       <div className="ad-editor-head">
-        <button type="button" className="ad-link" onClick={onClose}>← Voltar para a lista</button>
+        <button type="button" className="ad-btn ghost" style={{ alignSelf: "flex-start" }} onClick={onClose}>Voltar para a lista de produtos</button>
         <h1 className="ad-h1">{p.id ? "Editar produto" : "Novo produto"}</h1>
       </div>
       <Card title="Informações principais">
@@ -320,7 +339,9 @@ function Editor({ initial, cats, settings, onClose, onSaved }) {
         </Field>
         <Field label="Descrição"><textarea rows={5} value={p.description} onChange={(e) => set({ description: e.target.value })} /></Field>
       </Card>
-      <Card title="Fotografias" desc="Até 10 fotos de apresentação. Pelo menos 1 para publicar."><Photos photos={p.photos} onChange={(photos) => set({ photos })} /></Card>
+      <Card title="Fotografias" desc="Até 10 fotos de apresentação, no formato retangular. Pelo menos 1 para publicar.">
+        <Photos photos={p.photos} originals={p.specs._originais || {}} onChange={(photos, o) => set({ photos, specs: { ...p.specs, _originais: o } })} />
+      </Card>
       <Card title="Forma de venda e preço">
         <div className="ad-grid2">
           <Field label="Vendido como">
@@ -397,6 +418,9 @@ export default function Products({ cats, prods, setProds, setToast, settings, st
         <h1 className="ad-h1">Produtos</h1>
         <button className="ad-btn" onClick={() => setEditing({ ...EMPTY })}>+ Novo produto</button>
       </div>
+      {prods.some((p) => !p.active) && (
+        <p className="ad-alert"><strong>{prods.filter((p) => !p.active).length} produto(s) inativo(s) não aparecem para os clientes.</strong> Para publicar: toque em <b>Editar</b>, adicione pelo menos 1 foto e toque em <b>Publicar produto</b>.</p>
+      )}
       <Card title={`${prods.length} produtos — ${prods.filter((p) => p.active).length} ativos`} aside={<input className="ad-input" placeholder="Buscar" value={filter} onChange={(e) => setFilter(e.target.value)} />}>
         {list.length === 0 ? <p className="ad-muted">Nenhum produto. Clique em “Novo produto” para cadastrar o primeiro.</p> : (
           <ul className="ad-plist">

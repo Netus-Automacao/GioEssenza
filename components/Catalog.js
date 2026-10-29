@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { brl, waLink, openStatus, hasPromo, productAvailable, DAYS, cssVars, hourLabel, saleBadge } from "@/lib/data";
 import { WaIcon } from "./Icons";
 import CartButton from "./CartButton";
@@ -34,17 +34,25 @@ function Card({ p, preview }) {
           {!productAvailable(p) && <span className="badge out">Indisponível</span>}
         </div>
       </div>
-      <div className="card-body"><h3>{p.name}</h3>{saleBadge(p) && <p className="card-sale">{saleBadge(p)}</p>}<Price p={p} /></div>
+      <div className="card-body">
+        <h3>{p.name}</h3>
+        {saleBadge(p) && <p className="card-sale">{saleBadge(p)}</p>}
+        <Price p={p} />
+        <span className="card-cta">Ver produto</span>
+      </div>
     </>
   );
   return preview ? <div className="card">{inner}</div> : <Link href={`/produto/${p.id}`} className="card">{inner}</Link>;
 }
 
+const Grid = ({ items, preview }) => <div className="grid">{items.map((p) => <Card key={p.id} p={p} preview={preview} />)}</div>;
+
 export default function Catalog({ settings: s, categories = [], products = [], preview = false }) {
-  const [cat, setCat] = useState("all");
+  const [cat, setCat] = useState(null);   // null = lista de categorias; "all" = todos; id = uma categoria
   const [q, setQ] = useState("");
   const [open, setOpen] = useState(null);
   const [copied, setCopied] = useState(false);
+  const top = useRef();
 
   useEffect(() => {
     const f = () => setOpen(openStatus(s.hours));
@@ -54,14 +62,19 @@ export default function Catalog({ settings: s, categories = [], products = [], p
   }, [s.hours]);
 
   const visible = products.filter((p) => p.active !== false);
-  const usedCats = categories.filter((c) => c.active !== false).filter((c) => visible.some((p) => p.category_id === c.id));
+  const cats = categories.filter((c) => c.active !== false)
+    .map((c) => ({ ...c, items: visible.filter((p) => p.category_id === c.id) }))
+    .filter((c) => c.items.length);
   const featured = visible.filter((p) => p.featured);
-  const list = useMemo(() => visible.filter((p) =>
-    (cat === "all" || p.category_id === cat) &&
-    (!q || `${p.name} ${p.description || ""}`.toLowerCase().includes(q.toLowerCase()))), [visible, cat, q]);
+  const results = q ? visible.filter((p) => `${p.name} ${p.description || ""}`.toLowerCase().includes(q.toLowerCase())) : [];
+  const current = cats.find((c) => c.id === cat);
   const wa = s.whatsapp_enabled && s.whatsapp;
-  const vars = cssVars(s.colors);
+  const vars = cssVars(s.colors, s.fonts);
 
+  function choose(id) {
+    setCat(id); setQ("");
+    if (!preview) setTimeout(() => top.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 30);
+  }
   async function share() {
     const url = s.public_url || window.location.origin;
     try {
@@ -88,9 +101,33 @@ export default function Catalog({ settings: s, categories = [], products = [], p
     s.delivery.pickup && { t: "Retirada pelo cliente", d: `Você pode retirar pessoalmente ou chamar um app de entrega para buscar o pedido. ${s.delivery.pickup_note || ""}` },
   ].filter(Boolean);
 
+  // o que mostrar na seção de produtos
+  let body;
+  if (!visible.length) body = <p className="empty">Em breve, novos produtos por aqui.</p>;
+  else if (q) body = results.length ? <Grid items={results} preview={preview} /> : <p className="empty">Nenhum produto encontrado para “{q}”.</p>;
+  else if (cat === "all" || cats.length <= 1) body = <Grid items={visible} preview={preview} />;
+  else if (current) body = <Grid items={current.items} preview={preview} />;
+  else body = (
+    <>
+      <div className="cat-grid">
+        {cats.map((c) => {
+          const ph = c.items.find((p) => p.photos?.[0])?.photos[0];
+          return (
+            <button key={c.id} className="cat-tile" onClick={() => choose(c.id)}>
+              <span className="cat-tile-img">{ph ? <img src={ph} alt="" /> : <span className="ph">{c.name.charAt(0)}</span>}</span>
+              <span className="cat-tile-name">{c.name}</span>
+              <span className="cat-tile-count">{c.items.length} {c.items.length === 1 ? "produto" : "produtos"}</span>
+            </button>
+          );
+        })}
+      </div>
+      <button className="btn ghost block" onClick={() => choose("all")}>Ver todos os produtos</button>
+    </>
+  );
+
   return (
     <main className={`cat${preview ? " is-preview" : ""}`} style={vars}>
-      <div className="topbar">{preview ? <span className="cart-btn">Carrinho</span> : <CartButton />}</div>
+      <div className="topbar">{preview ? <span className="nav-btn">Carrinho</span> : <CartButton />}</div>
       <Cover s={s} />
       <section className="ident">
         <div className="logo">{s.logo ? <img src={s.logo} alt={`Logo ${s.name}`} /> : <span>{s.name}</span>}</div>
@@ -104,24 +141,23 @@ export default function Catalog({ settings: s, categories = [], products = [], p
         </div>
       </section>
 
-      {featured.length > 0 && (
+      {featured.length > 0 && !cat && !q && (
         <section className="block">
           <h2 className="sec-title">Destaques</h2>
-          <div className="featured">{featured.map((p) => <Card key={p.id} p={p} preview={preview} />)}</div>
+          <Grid items={featured} preview={preview} />
         </section>
       )}
 
-      <section className="block">
-        <h2 className="sec-title">Produtos</h2>
-        <input className="search" type="search" placeholder="Buscar produto" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Buscar produto" />
-        {usedCats.length > 1 && (
-          <nav className="chips" aria-label="Categorias">
-            <button className={cat === "all" ? "on" : ""} onClick={() => setCat("all")}>Todos</button>
-            {usedCats.map((c) => <button key={c.id} className={cat === c.id ? "on" : ""} onClick={() => setCat(c.id)}>{c.name}</button>)}
-          </nav>
+      <section className="block" ref={top}>
+        <h2 className="sec-title">{current ? current.name : cat === "all" ? "Todos os produtos" : "Nossos produtos"}</h2>
+        {(current || cat === "all") && !q && (
+          <button className="btn block back-cats" onClick={() => choose(null)}>Ver todas as categorias</button>
         )}
-        {list.length ? <div className="grid">{list.map((p) => <Card key={p.id} p={p} preview={preview} />)}</div>
-          : <p className="empty">Nenhum produto encontrado{q ? ` para “${q}”` : ""}.</p>}
+        {visible.length > 0 && (
+          <input className="search" type="search" placeholder="Buscar produto" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Buscar produto" />
+        )}
+        {cats.length > 1 && !cat && !q && <p className="hint">Escolha uma categoria:</p>}
+        {body}
       </section>
 
       {(s.hours.show || delivery.length > 0) && (

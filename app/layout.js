@@ -1,9 +1,6 @@
-import { Marcellus, Figtree } from "next/font/google";
 import "./globals.css";
 import { getSettings } from "@/lib/server";
-
-const display = Marcellus({ subsets: ["latin"], weight: "400", variable: "--f-display" });
-const body = Figtree({ subsets: ["latin"], variable: "--f-body" });
+import { DEFAULT_SETTINGS, fontsHref } from "@/lib/data";
 
 export async function generateMetadata() {
   try {
@@ -12,10 +9,17 @@ export async function generateMetadata() {
   } catch { return { title: "Gio Essenza" }; }
 }
 
-export default function RootLayout({ children }) {
+export default async function RootLayout({ children }) {
+  let f = DEFAULT_SETTINGS.fonts;
+  try { f = (await getSettings()).fonts; } catch {}
   return (
-    <html lang="pt-BR" className={`${display.variable} ${body.variable}`}>
-      <head><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" /></head>
+    <html lang="pt-BR">
+      <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
+        <link rel="stylesheet" href={fontsHref([f.title, f.body, "Figtree", "Marcellus"])} />
+      </head>
       <body>{children}</body>
     </html>
   );
