@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { brl, waLink, openStatus, hasPromo, productAvailable, DAYS, cssVars, hourLabel, saleBadge } from "@/lib/data";
+import { brl, waLink, openStatus, hasPromo, productAvailable, DAYS, cssVars, hourLabel, saleBadge, paymentLists } from "@/lib/data";
 import { WaIcon, LinkIcon } from "./Icons";
 import CartButton from "./CartButton";
 
@@ -162,6 +162,8 @@ export default function Catalog({ settings: s, categories = [], products = [], p
     </>
   );
 
+  const pay = paymentLists(s.payments);
+  const showPay = s.payments.show && (pay.methods.length || pay.conditions.length);
   const about = s.about;
   const showAbout = about.enabled && (about.text || about.photo);
 
@@ -211,7 +213,7 @@ export default function Catalog({ settings: s, categories = [], products = [], p
         </section>
       )}
 
-      {(s.hours.show || delivery.length > 0) && (
+      {(s.hours.show || delivery.length > 0 || showPay) && (
         <section className="block info">
           {s.hours.show && (
             <div>
@@ -227,6 +229,14 @@ export default function Catalog({ settings: s, categories = [], products = [], p
             <div>
               <h2 className="sec-title">Entrega e retirada</h2>
               {delivery.map((x) => <div className="deliv" key={x.t}><strong>{x.t}</strong><p>{x.d}</p></div>)}
+            </div>
+          )}
+          {showPay && (
+            <div>
+              <h2 className="sec-title">Formas de pagamento</h2>
+              {pay.methods.length > 0 && <div className="deliv"><strong>Aceitamos</strong><ul className="pay-list">{pay.methods.map((m) => <li key={m}>{m}</li>)}</ul></div>}
+              {pay.conditions.length > 0 && <div className="deliv"><strong>Condições</strong><ul className="pay-list">{pay.conditions.map((m) => <li key={m}>{m}</li>)}</ul></div>}
+              {s.payments.note && <p className="hint">{s.payments.note}</p>}
             </div>
           )}
         </section>

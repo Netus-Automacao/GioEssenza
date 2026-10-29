@@ -470,3 +470,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 .foot p{margin:0}
 .policies{max-width:44rem;line-height:1.7}
 .policies p{margin:0 0 .5rem}
+.pay-list{margin:.35rem 0 0;padding-left:1.1rem;line-height:1.55;font-size:.93rem}
+.important.prazo{background:color-mix(in srgb,var(--primary) 8%,var(--bg))}
+.important .hint{margin:.35rem 0 0;font-size:.82rem}
+@media(min-width:1000px){.info{grid-template-columns:1fr 1fr 1fr}}

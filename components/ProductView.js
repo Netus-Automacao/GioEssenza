@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { brl, hasPromo, productAvailable, valueAvailable, cssVars, unitPrice, maxQty, saleBadge, specSections, filled, kitOptions, kitUnit, importantText } from "@/lib/data";
+import { brl, hasPromo, productAvailable, valueAvailable, cssVars, unitPrice, maxQty, saleBadge, specSections, filled, kitOptions, kitUnit, importantText, PRAZO_NOTE } from "@/lib/data";
 import { addToCart } from "@/lib/cart";
 import CartButton from "./CartButton";
 
@@ -215,6 +215,7 @@ export default function ProductView({ settings: s, product: p, categoryName, pre
           )}
           {added && <p className="ok">Adicionado ao carrinho. <Link href="/carrinho">Ver carrinho</Link> ou continue escolhendo.</p>}
 
+          {filled(p.specs?.prazo) && <div className="important prazo"><strong>Prazo de confecção</strong><p>{p.specs.prazo}</p><p className="hint">{PRAZO_NOTE}</p></div>}
           {importantText(p) && <div className="important"><strong>Importante</strong><p>{importantText(p)}</p></div>}
           {p.description && <div className="pdesc">{p.description.split("\n").map((l, i) => <p key={i}>{l}</p>)}</div>}
           {specs.length > 0 && (

@@ -322,3 +322,29 @@ export function TabPoliticas({ s, set }) {
     </>
   );
 }
+
+export function TabPagamento({ s, set }) {
+  const p = s.payments;
+  const setP = (patch) => set({ payments: { ...p, ...patch } });
+  return (
+    <>
+      <h1 className="ad-h1">Formas de pagamento</h1>
+      <Card title="Exibição">
+        <Toggle label="Mostrar formas de pagamento no catálogo" hint="Aparece na página inicial, junto de Entrega e retirada." checked={p.show} onChange={(v) => setP({ show: v })} />
+      </Card>
+      <Card title="Formas que aceitamos" desc="Marque só as que a loja aceita.">
+        <Toggle label="Pix" checked={p.pix} onChange={(v) => setP({ pix: v })} />
+        <Toggle label="Cartão de crédito por link de pagamento" hint="Aparece com o aviso “com taxa da maquininha”." checked={p.credit_link} onChange={(v) => setP({ credit_link: v })} />
+        <Toggle label="Cartão de débito" checked={p.debit} onChange={(v) => setP({ debit: v })} />
+        <Toggle label="Dinheiro" checked={p.cash} onChange={(v) => setP({ cash: v })} />
+      </Card>
+      <Card title="Condições de pagamento">
+        <Toggle label="50% no ato do pedido e 50% na retirada" checked={p.half} onChange={(v) => setP({ half: v })} />
+        <Toggle label="Pagamento integral para confirmar o pedido" checked={p.full} onChange={(v) => setP({ full: v })} />
+        <Field label="Observação (opcional)" hint="Ex.: chave Pix, prazo para pagamento…">
+          <textarea rows={3} maxLength={300} value={p.note} onChange={(e) => setP({ note: e.target.value })} />
+        </Field>
+      </Card>
+    </>
+  );
+}

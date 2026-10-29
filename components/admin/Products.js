@@ -369,6 +369,9 @@ function Editor({ initial, cats, settings, onClose, onSaved }) {
           </select>
         </Field>
         <Field label="Descrição"><textarea rows={5} value={p.description} onChange={(e) => set({ description: e.target.value })} /></Field>
+        <Field label="Prazo de confecção" hint="Ex.: 7 a 10 dias úteis após a confirmação. No site aparece junto o aviso: “É necessário verificar a disponibilidade da agenda da semana.”">
+          <input value={p.specs.prazo || ""} maxLength={120} onChange={(e) => set({ specs: { ...p.specs, prazo: e.target.value } })} />
+        </Field>
         <Field label="Importante" hint="Aparece em destaque na página do produto. Deixe vazio para não mostrar.">
           <textarea rows={3} value={p.specs.importante} onChange={(e) => set({ specs: { ...p.specs, importante: e.target.value } })} />
         </Field>
