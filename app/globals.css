@@ -545,3 +545,11 @@ button,input,select,textarea{font:inherit;color:inherit}
     radial-gradient(var(--s) at 50% 0,#000 calc(100% - 1px),#0000) bottom/calc(var(--s) * 2) var(--s) repeat-x}
 @media(min-width:760px){.hero-band{--s:26px}}
 .hero.no-band .hero-band{-webkit-mask:none;mask:none}
+
+/* ===== v4.9: babado no topo da seção "Sobre nós" ===== */
+.about{--s:20px;padding-top:calc(2.4rem + var(--s));
+  -webkit-mask:radial-gradient(var(--s) at 50% 100%,#000 calc(100% - 1px),#0000) top/calc(var(--s) * 2) var(--s) repeat-x,
+    linear-gradient(#000 0 0) bottom/100% calc(100% - var(--s) + 1px) no-repeat;
+  mask:radial-gradient(var(--s) at 50% 100%,#000 calc(100% - 1px),#0000) top/calc(var(--s) * 2) var(--s) repeat-x,
+    linear-gradient(#000 0 0) bottom/100% calc(100% - var(--s) + 1px) no-repeat}
+@media(min-width:760px){.about{--s:26px}}
