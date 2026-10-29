@@ -97,8 +97,8 @@ export default function Catalog({ settings: s, categories = [], products = [], p
   }
 
   const delivery = [
-    s.delivery.app && { t: "Entrega por aplicativo", d: "Solicitada pelo cliente (Uber ou outro app). O valor da corrida fica por conta do cliente." },
-    s.delivery.pickup && { t: "Retirada pelo cliente", d: `Você pode retirar pessoalmente ou chamar um app de entrega para buscar o pedido. ${s.delivery.pickup_note || ""}` },
+    s.delivery.app && { t: "Entrega por aplicativo", d: s.delivery.app_text },
+    s.delivery.pickup && { t: "Retiradas", d: s.delivery.pickup_text },
   ].filter(Boolean);
 
   // o que mostrar na seção de produtos

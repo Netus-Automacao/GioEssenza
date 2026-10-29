@@ -60,7 +60,7 @@ export default function CartView({ settings: s }) {
               <fieldset className="pick">
                 <legend>Como prefere receber? <em>(opcional)</em></legend>
                 <div className="pills">{modes.map((m) => <button key={m} className={mode === m ? "on" : ""} onClick={() => setMode(mode === m ? "" : m)}>{m}</button>)}</div>
-                <p className="hint">O transporte é contratado e pago pelo cliente. {s.delivery.pickup_note}</p>
+                <p className="hint">{[s.delivery.app && s.delivery.app_text, s.delivery.pickup && s.delivery.pickup_text].filter(Boolean).join(" ")}</p>
               </fieldset>
             )}
             <div className="cart-total"><span>Total dos produtos</span><strong>{brl(total)}</strong></div>

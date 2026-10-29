@@ -237,14 +237,17 @@ export function TabEntrega({ s, set }) {
   return (
     <>
       <h1 className="ad-h1">Entrega e retirada</h1>
-      <Card title="Modalidades" desc="Só as modalidades ativadas aparecem no catálogo.">
-        <Toggle label="Entrega por aplicativo, solicitado pelo cliente." hint="O cliente chama Uber ou outro app e paga a corrida. Não aparece como entrega feita pela loja."
-          checked={d.app} onChange={(v) => setD({ app: v })} />
-        <Toggle label="Retirada pelo cliente." hint="O cliente retira pessoalmente ou chama um app para buscar o pedido; transporte por conta dele."
-          checked={d.pickup} onChange={(v) => setD({ pickup: v })} />
+      <Card title="Modalidades" desc="Só as modalidades ativadas aparecem no catálogo. O texto de cada uma é exatamente o que o cliente vê.">
+        <Toggle label="Entrega por aplicativo" hint="O cliente chama o app e paga a corrida." checked={d.app} onChange={(v) => setD({ app: v })} />
+        {d.app && (
+          <Field label="Texto da entrega por aplicativo">
+            <textarea rows={3} maxLength={300} value={d.app_text} onChange={(e) => setD({ app_text: e.target.value })} />
+          </Field>
+        )}
+        <Toggle label="Retiradas" hint="O cliente retira pessoalmente." checked={d.pickup} onChange={(v) => setD({ pickup: v })} />
         {d.pickup && (
-          <Field label="Observação sobre a retirada" hint="Opcional. Aparece junto da modalidade.">
-            <input value={d.pickup_note} onChange={(e) => setD({ pickup_note: e.target.value })} maxLength={160} />
+          <Field label="Texto das retiradas">
+            <textarea rows={3} maxLength={300} value={d.pickup_text} onChange={(e) => setD({ pickup_text: e.target.value })} />
           </Field>
         )}
       </Card>
