@@ -4,6 +4,7 @@ import Catalog from "@/components/Catalog";
 import { DAYS, contrast, FONTS, BODY_FONTS, WEIGHT_LABEL, fontsHref, fontFaceCss, titleFamily, bodyFamily } from "@/lib/data";
 import { uploadFont } from "@/lib/supabase";
 import { Toggle, Field, ColorField, ImagePicker, Card } from "./ui";
+import { LINK_TYPES, LinkIcon } from "@/components/Icons";
 
 const SAMPLE = [
   { id: "a", name: "Agenda personalizada", price: 105, promo_price: 89, featured: true, photos: [], active: true },
@@ -76,6 +77,29 @@ export function TabIdentidade({ s, set, save, setToast, prods, cats }) {
           <Field label={`Descrição da loja (${s.description.length}/500)`} hint="Aparece logo abaixo do nome, no topo do catálogo.">
             <textarea rows={4} maxLength={500} value={s.description} onChange={(e) => set({ description: e.target.value })} />
           </Field>
+        </Card>
+        <Card title="Redes sociais e links" desc="Aparecem como botões logo abaixo do WhatsApp, na página inicial.">
+          {(s.links || []).map((l, i) => {
+            const setL = (patch) => set({ links: s.links.map((x, j) => (j === i ? { ...x, ...patch } : x)) });
+            return (
+              <div key={i} className="ad-group">
+                <div className="ad-grid2">
+                  <Field label="Ícone">
+                    <select value={l.type} onChange={(e) => setL({ type: e.target.value, label: l.label && l.label !== LINK_TYPES[l.type] ? l.label : LINK_TYPES[e.target.value] })}>
+                      {Object.entries(LINK_TYPES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                    </select>
+                  </Field>
+                  <Field label="Texto do botão"><input value={l.label} maxLength={30} onChange={(e) => setL({ label: e.target.value })} /></Field>
+                </div>
+                <Field label="Link (endereço completo)"><input type="url" inputMode="url" placeholder="https://..." value={l.url} onChange={(e) => setL({ url: e.target.value.trim() })} /></Field>
+                <div className="ad-row">
+                  <span className="ad-muted" style={{ display: "inline-flex", gap: ".4rem", alignItems: "center" }}><LinkIcon type={l.type} /> Prévia do ícone</span>
+                  <button type="button" className="ad-btn ghost sm danger" onClick={() => set({ links: s.links.filter((_, j) => j !== i) })}>Remover</button>
+                </div>
+              </div>
+            );
+          })}
+          <button type="button" className="ad-btn ghost" style={{ alignSelf: "flex-start" }} onClick={() => set({ links: [...(s.links || []), { type: "link", label: "", url: "" }] })}>+ Adicionar link</button>
         </Card>
         <Card title="Botões do WhatsApp" desc="Botão de contato na página inicial e botão de pedido em cada produto.">
           <Toggle label="Mostrar botões do WhatsApp" checked={s.whatsapp_enabled} onChange={(v) => set({ whatsapp_enabled: v })} />

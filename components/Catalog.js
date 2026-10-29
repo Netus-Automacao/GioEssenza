@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { brl, waLink, openStatus, hasPromo, productAvailable, DAYS, cssVars, hourLabel, saleBadge } from "@/lib/data";
-import { WaIcon } from "./Icons";
+import { WaIcon, LinkIcon } from "./Icons";
 import CartButton from "./CartButton";
 
 export function Price({ p }) {
@@ -145,6 +145,13 @@ export default function Catalog({ settings: s, categories = [], products = [], p
           {wa && <a className="btn" href={waLink(s.whatsapp, `Olá! Vim pelo catálogo da ${s.name}.`)} target="_blank" rel="noreferrer"><WaIcon /> Chamar no WhatsApp</a>}
           <button className="btn ghost" onClick={share}>{copied ? "Link copiado" : "Compartilhar"}</button>
         </div>
+        {(s.links || []).filter((l) => l.url).length > 0 && (
+          <div className="social">
+            {s.links.filter((l) => l.url).map((l, i) => (
+              <a key={i} className="social-btn" href={l.url} target="_blank" rel="noreferrer"><LinkIcon type={l.type} /> {l.label || l.type}</a>
+            ))}
+          </div>
+        )}
       </section>
 
       {featured.length > 0 && !cat && !q && (

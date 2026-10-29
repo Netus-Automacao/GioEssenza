@@ -394,3 +394,10 @@ button,input,select,textarea{font:inherit;color:inherit}
 .cover{padding-top:calc(4.6rem + env(safe-area-inset-top))}
 .cover:not(.has-text){height:auto;min-height:150px}
 .topbar{top:calc(.9rem + env(safe-area-inset-top))}
+
+/* v3.6: setas da galeria discretas; botões de redes sociais */
+.gal-nav{width:30px;height:30px;font-size:1.25rem;background:rgba(255,255,255,.55);box-shadow:none;color:#333;line-height:1}
+.gal-nav.prev{left:6px}.gal-nav.next{right:6px}
+.gal-count{font-size:.72rem;bottom:8px;right:8px}
+.social{display:flex;flex-wrap:wrap;gap:.5rem;justify-content:center;margin-top:.8rem}
+.social-btn{display:inline-flex;align-items:center;gap:.4rem;padding:.55rem 1rem;border-radius:999px;background:var(--soft);color:var(--primary);font-weight:700;text-decoration:none;font-size:.9rem}
