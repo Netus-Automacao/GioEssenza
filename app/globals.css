@@ -478,3 +478,8 @@ button,input,select,textarea{font:inherit;color:inherit}
 .cat{--logo:185px}
 .hero.no-band .hero-band{background:none;color:var(--text);padding-bottom:.4rem}
 .ad-savebar{background:#8A4B1F}
+/* v4.4 */
+@media(min-width:1000px){.info{grid-template-columns:1fr 1fr}}
+.foot-addr{display:inline-flex;align-items:center;gap:.35rem;color:var(--primary);text-decoration:none;font-weight:600;font-size:.88rem;text-align:center}
+.foot-name{font-family:var(--f-display);font-weight:var(--title-weight);color:var(--title);opacity:1}
+.foot p{margin:0}

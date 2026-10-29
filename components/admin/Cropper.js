@@ -4,7 +4,8 @@ import { useEffect, useRef, useState } from "react";
 const RATIO = 4 / 3; // altura ÷ largura → formato retangular 3:4, igual à câmera do celular
 const MAX_W = 1600;  // largura máxima salva (mantém a qualidade)
 
-export default function Cropper({ src, onCancel, onDone, step }) {
+export default function Cropper({ src, onCancel, onDone, step, ratio = RATIO }) {
+  const R = ratio;
   const box = useRef();
   const drag = useRef(null);
   const [img, setImg] = useState(null);
@@ -27,7 +28,7 @@ export default function Cropper({ src, onCancel, onDone, step }) {
     return () => window.removeEventListener("resize", m);
   }, []);
 
-  const H = W * RATIO;
+  const H = W * R;
   const base = img ? Math.max(W / img.naturalWidth, H / img.naturalHeight) : 1;
   const sc = base * zoom;
   const dw = img ? img.naturalWidth * sc : 0;
@@ -51,7 +52,7 @@ export default function Cropper({ src, onCancel, onDone, step }) {
     setBusy(true); setErr("");
     try {
       const sx = -pos.x / sc, sy = -pos.y / sc, sw = W / sc, sh = H / sc;
-      const ow = Math.round(Math.min(sw, MAX_W)), oh = Math.round(ow * RATIO);
+      const ow = Math.round(Math.min(sw, MAX_W)), oh = Math.round(ow * R);
       const c = document.createElement("canvas");
       c.width = ow; c.height = oh;
       const ctx = c.getContext("2d");

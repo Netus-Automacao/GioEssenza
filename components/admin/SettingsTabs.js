@@ -2,7 +2,8 @@
 import { useEffect, useState } from "react";
 import Catalog from "@/components/Catalog";
 import { DAYS, contrast, FONTS, BODY_FONTS, WEIGHT_LABEL, fontsHref, fontFaceCss, titleFamily, bodyFamily } from "@/lib/data";
-import { uploadFont } from "@/lib/supabase";
+import { uploadFont, uploadImage } from "@/lib/supabase";
+import Cropper from "./Cropper";
 import { Toggle, Field, ColorField, ImagePicker, Card } from "./ui";
 import { LINK_TYPES, LinkIcon } from "@/components/Icons";
 
@@ -73,6 +74,9 @@ export function TabIdentidade({ s, set, save, setToast, prods, cats }) {
           </div>
           <Field label="WhatsApp para pedidos" hint={digits.length < 12 ? "Inclua o código do país e o DDD. Exemplo: 5541987152125." : `Os pedidos vão para +${digits}.`}>
             <input inputMode="tel" value={s.whatsapp} onChange={(e) => set({ whatsapp: e.target.value.replace(/[^\d+ ()-]/g, "") })} />
+          </Field>
+          <Field label="Endereço da loja" hint="Aparece no rodapé do site, com link para abrir no mapa. Ex.: Rua das Flores, 123 – Centro, Curitiba – PR">
+            <input value={s.address || ""} maxLength={200} onChange={(e) => set({ address: e.target.value })} />
           </Field>
           <Field label={`Descrição da loja (${s.description.length}/500)`} hint="Aparece logo abaixo do nome, no topo do catálogo.">
             <textarea rows={4} maxLength={500} value={s.description} onChange={(e) => set({ description: e.target.value })} />
@@ -292,8 +296,8 @@ export function TabSobre({ s, set, save, prods, cats }) {
         <Card title="Exibição">
           <Toggle label="Mostrar a seção “Sobre nós” no catálogo" checked={a.enabled} onChange={(v) => setA({ enabled: v })} />
         </Card>
-        <Card title="Foto" desc="Uma foto sua ou do ateliê. Salva automaticamente ao enviar.">
-          <ImagePicker value={a.photo} onChange={(photo) => save({ ...s, about: { ...a, photo } })} label="Enviar foto" />
+        <Card title="Foto" desc="Uma foto sua ou do ateliê. Depois de escolher, enquadre do jeito que quiser. Salva automaticamente.">
+          <AboutPhoto a={a} onSave={(patch) => save({ ...s, about: { ...a, ...patch } })} />
         </Card>
         <Card title="Texto">
           <Field label="Título"><input value={a.title} maxLength={80} onChange={(e) => setA({ title: e.target.value })} /></Field>
@@ -334,17 +338,47 @@ export function TabPagamento({ s, set }) {
       </Card>
       <Card title="Formas que aceitamos" desc="Marque só as que a loja aceita.">
         <Toggle label="Pix" checked={p.pix} onChange={(v) => setP({ pix: v })} />
-        <Toggle label="Cartão de crédito por link de pagamento" hint="Aparece com o aviso “com taxa da maquininha”." checked={p.credit_link} onChange={(v) => setP({ credit_link: v })} />
+        <Toggle label="Cartão de crédito via link de pagamento" hint="Aparece com o aviso “possui taxa da operadora”." checked={p.credit_link} onChange={(v) => setP({ credit_link: v })} />
         <Toggle label="Cartão de débito" checked={p.debit} onChange={(v) => setP({ debit: v })} />
         <Toggle label="Dinheiro" checked={p.cash} onChange={(v) => setP({ cash: v })} />
       </Card>
       <Card title="Condições de pagamento">
-        <Toggle label="50% no ato do pedido e 50% na retirada" checked={p.half} onChange={(v) => setP({ half: v })} />
-        <Toggle label="Pagamento integral para confirmar o pedido" checked={p.full} onChange={(v) => setP({ full: v })} />
+        <Toggle label="Sinal de 50% na confirmação do pedido e 50% na retirada" checked={p.half} onChange={(v) => setP({ half: v })} />
+        <Toggle label="Pagamento integral na confirmação do pedido" checked={p.full} onChange={(v) => setP({ full: v })} />
         <Field label="Observação (opcional)" hint="Ex.: chave Pix, prazo para pagamento…">
           <textarea rows={3} maxLength={300} value={p.note} onChange={(e) => setP({ note: e.target.value })} />
         </Field>
       </Card>
     </>
+  );
+}
+
+function AboutPhoto({ a, onSave }) {
+  const [job, setJob] = useState(null); // { src, file? }
+  const [err, setErr] = useState("");
+  async function done(cropped) {
+    const url = await uploadImage(cropped);
+    const original = job.file ? await uploadImage(job.file) : a.photo_original || a.photo;
+    onSave({ photo: url, photo_original: original });
+    if (job.file) URL.revokeObjectURL(job.src);
+    setJob(null);
+  }
+  return (
+    <div className="ad-img">
+      <div className="ad-img-prev" style={{ width: 140, aspectRatio: "4/5" }}>{a.photo ? <img src={a.photo} alt="" /> : <span>Sem foto</span>}</div>
+      <div className="ad-img-actions">
+        <label className="ad-btn">{a.photo ? "Trocar foto" : "Enviar foto"}
+          <input type="file" hidden accept="image/jpeg,image/png,image/webp" onChange={(e) => {
+            const f = e.target.files?.[0]; e.target.value = "";
+            if (!f) return; if (!/^image\/(jpeg|png|webp)$/.test(f.type)) return setErr("Use JPG, PNG ou WebP.");
+            setErr(""); setJob({ src: URL.createObjectURL(f), file: f });
+          }} />
+        </label>
+        {a.photo && <button type="button" className="ad-btn ghost" onClick={() => setJob({ src: a.photo_original || a.photo })}>Enquadrar</button>}
+        {a.photo && <button type="button" className="ad-btn ghost" onClick={() => onSave({ photo: "", photo_original: "" })}>Remover</button>}
+        {err && <small className="ad-err">{err}</small>}
+      </div>
+      {job && <Cropper src={job.src} ratio={5 / 4} onCancel={() => setJob(null)} onDone={done} />}
+    </div>
   );
 }

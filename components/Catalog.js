@@ -150,7 +150,6 @@ export default function Catalog({ settings: s, categories = [], products = [], p
             {c.items.length > 3 && <button className="link-btn" onClick={() => choose(c.id)}>Ver tudo ({c.items.length})</button>}
           </div>
           <Grid items={c.items.slice(0, 3)} preview={preview} compact />
-          {c.items.length > 3 && <button className="btn ghost block see-more" onClick={() => choose(c.id)}>Ver mais produtos de {c.name}</button>}
         </section>
       ))}
       {loose.length > 0 && (
@@ -215,6 +214,20 @@ export default function Catalog({ settings: s, categories = [], products = [], p
 
       {(s.hours.show || delivery.length > 0 || showPay) && (
         <section className="block info">
+          {showPay && (
+            <div>
+              <h2 className="sec-title">Formas de pagamento</h2>
+              {pay.methods.length > 0 && <div className="deliv"><strong>Formas aceitas</strong><ul className="pay-list">{pay.methods.map((m) => <li key={m}>{m}</li>)}</ul></div>}
+              {pay.conditions.length > 0 && <div className="deliv"><strong>Condições de pagamento</strong><ul className="pay-list">{pay.conditions.map((m) => <li key={m}>{m}</li>)}</ul></div>}
+              {s.payments.note && <p className="hint">{s.payments.note}</p>}
+            </div>
+          )}
+          {delivery.length > 0 && (
+            <div>
+              <h2 className="sec-title">Entrega e retirada</h2>
+              {delivery.map((x) => <div className="deliv" key={x.t}><strong>{x.t}</strong><p>{x.d}</p></div>)}
+            </div>
+          )}
           {s.hours.show && (
             <div>
               <h2 className="sec-title">Horário de atendimento</h2>
@@ -225,26 +238,19 @@ export default function Catalog({ settings: s, categories = [], products = [], p
               </ul>
             </div>
           )}
-          {delivery.length > 0 && (
-            <div>
-              <h2 className="sec-title">Entrega e retirada</h2>
-              {delivery.map((x) => <div className="deliv" key={x.t}><strong>{x.t}</strong><p>{x.d}</p></div>)}
-            </div>
-          )}
-          {showPay && (
-            <div>
-              <h2 className="sec-title">Formas de pagamento</h2>
-              {pay.methods.length > 0 && <div className="deliv"><strong>Aceitamos</strong><ul className="pay-list">{pay.methods.map((m) => <li key={m}>{m}</li>)}</ul></div>}
-              {pay.conditions.length > 0 && <div className="deliv"><strong>Condições</strong><ul className="pay-list">{pay.conditions.map((m) => <li key={m}>{m}</li>)}</ul></div>}
-              {s.payments.note && <p className="hint">{s.payments.note}</p>}
-            </div>
-          )}
         </section>
       )}
 
       <footer className="foot">
         {s.policies.text && (preview ? <span className="btn ghost">{s.policies.title}</span> : <Link className="btn ghost" href="/politicas">{s.policies.title || "Políticas da loja"}</Link>)}
-        <p>{s.name}{s.slogan ? ` — ${s.slogan}` : ""}</p>
+        {s.address && (
+          <a className="foot-addr" href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(s.address)}`} target="_blank" rel="noreferrer">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M12 21s-7-6.1-7-11a7 7 0 0 1 14 0c0 4.9-7 11-7 11z" /><circle cx="12" cy="10" r="2.5" /></svg>
+            {s.address}
+          </a>
+        )}
+        <p className="foot-name">{s.name}</p>
+        {s.slogan && <p>{s.slogan}</p>}
       </footer>
       {wa && <a className="wa-float" href={waLink(s.whatsapp, `Olá! Vim pelo catálogo da ${s.name}.`)} target="_blank" rel="noreferrer" aria-label="WhatsApp"><WaIcon size={26} /></a>}
     </main>
