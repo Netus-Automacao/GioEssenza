@@ -387,3 +387,10 @@ button,input,select,textarea{font:inherit;color:inherit}
 @media(max-width:600px){.ad-cats li{grid-template-columns:1fr 1fr 1fr}.ad-cats li input{grid-column:1/-1}.ad-cats li .ad-muted{grid-column:1/-1}.ad-cats li .ad-btn{grid-column:auto}}
 .ad-photos figcaption button:disabled{opacity:.35}
 .ad-photos figcaption button.danger{color:#9B3B2A}
+
+/* v3.1: texto do banner sempre legível e sem ficar atrás do botão do carrinho */
+.cat .cover-text h2{color:#fff!important}
+.cat .cover-text p{color:#fff}
+.cover{padding-top:calc(4.6rem + env(safe-area-inset-top))}
+.cover:not(.has-text){height:auto;min-height:150px}
+.topbar{top:calc(.9rem + env(safe-area-inset-top))}
