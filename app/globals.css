@@ -525,3 +525,14 @@ button,input,select,textarea{font:inherit;color:inherit}
 .prod-info .specs{margin-top:2.2rem;gap:1.8rem}
 .prod-info .specs dd{padding:.55rem 0}
 .prod-info .price.big{margin-top:.6rem}
+
+/* ===== v4.6: topo verde inteiro com base arredondada ===== */
+.hero{padding-top:0}
+.hero-band{padding:calc(4.4rem + env(safe-area-inset-top)) 1.25rem 2.8rem;border-radius:0 0 50% 50% / 0 0 56px 56px;overflow:hidden}
+.hero-logo{position:relative;left:auto;top:auto;transform:none;margin:0 auto 1rem;
+  box-shadow:0 0 0 6px rgba(255,255,255,.35),0 10px 26px rgba(0,0,0,.25)}
+.hero.no-band .hero-band{border-radius:0;padding-top:calc(4.4rem + env(safe-area-inset-top))}
+.ident{padding-top:1.6rem}
+/* botões do topo claros, destacando sobre o verde */
+.topbar .nav-btn{background:var(--bg);color:var(--primary)!important;box-shadow:0 3px 10px rgba(0,0,0,.18)}
+.topbar .nav-btn b{background:var(--primary);color:var(--on-primary)}
