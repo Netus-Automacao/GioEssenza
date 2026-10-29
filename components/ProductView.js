@@ -84,7 +84,7 @@ export default function ProductView({ settings: s, product: p, categoryName, pre
   const n = photos.length;
   const go = (d) => n > 1 && setIdx((idx + d + n) % n);
   return (
-    <main className={`cat${preview ? " is-preview" : ""}`} style={cssVars(s.colors, s.fonts)}>
+    <main className={`cat${preview ? " is-preview" : ""}`} style={cssVars(s.colors, s.fonts, s.shadow)}>
       <nav className="pbar">
         {preview ? <span className="nav-btn">Voltar</span> : (
           <button className="nav-btn" onClick={() => {

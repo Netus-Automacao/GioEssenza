@@ -93,7 +93,7 @@ export default function Catalog({ settings: s, categories = [], products = [], p
   const results = q ? visible.filter((p) => `${p.name} ${p.description || ""}`.toLowerCase().includes(q.toLowerCase())) : [];
   const current = cats.find((c) => c.id === cat);
   const wa = s.whatsapp_enabled && s.whatsapp;
-  const vars = cssVars(s.colors, s.fonts);
+  const vars = cssVars(s.colors, s.fonts, s.shadow);
 
   function choose(id) {
     setCat(id); setQ("");
@@ -183,8 +183,8 @@ export default function Catalog({ settings: s, categories = [], products = [], p
           const insta = links.find((l) => l.type === "instagram");
           const others = links.filter((l) => l !== insta);
           const policiesBtn = s.policies.text && (preview
-            ? <span className="social-btn"><LinkIcon type="link" /> {s.policies.title || "Políticas da loja"}</span>
-            : <Link className="social-btn" href="/politicas"><LinkIcon type="link" /> {s.policies.title || "Políticas da loja"}</Link>);
+            ? <span className="social-btn"><LinkIcon type="politicas" /> {s.policies.title || "Políticas da loja"}</span>
+            : <Link className="social-btn" href="/politicas"><LinkIcon type="politicas" /> {s.policies.title || "Políticas da loja"}</Link>);
           return (
             <>
               <div className="ident-actions">

@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Catalog from "@/components/Catalog";
-import { DAYS, contrast, FONTS, BODY_FONTS, WEIGHT_LABEL, fontsHref, fontFaceCss, titleFamily, bodyFamily } from "@/lib/data";
+import { DAYS, contrast, cssVars, FONTS, BODY_FONTS, WEIGHT_LABEL, fontsHref, fontFaceCss, titleFamily, bodyFamily } from "@/lib/data";
 import { uploadFont, uploadImage } from "@/lib/supabase";
 import Cropper from "./Cropper";
 import { Toggle, Field, ColorField, ImagePicker, Card } from "./ui";
@@ -191,6 +191,17 @@ export function TabCores({ s, set, prods, cats }) {
             Contraste entre texto e fundo: {r.toFixed(1)}:1 — {r >= 7 ? "excelente" : r >= 4.5 ? "boa leitura" : "baixo; escolha um texto mais escuro ou um fundo mais claro"}.
           </p>
           {rt < 3 && <p className="ad-note warn">A cor dos títulos está muito clara para o fundo. Escolha um tom mais escuro.</p>}
+        </Card>
+        <Card title="Sombra das imagens" desc="Sombra das fotos dos produtos, da foto do Sobre nós e do logo.">
+          <div className="ad-grid2">
+            <ColorField label="Cor da sombra" value={s.shadow.color} onChange={(color) => set({ shadow: { ...s.shadow, color } })} />
+            <Field label={`Intensidade: ${s.shadow.strength}%`} hint="0% = sem sombra. Quanto maior, mais escura.">
+              <input type="range" min="0" max="70" step="1" value={s.shadow.strength} onChange={(e) => set({ shadow: { ...s.shadow, strength: Number(e.target.value) } })} />
+            </Field>
+          </div>
+          <div style={{ display: "flex", gap: "1rem", padding: ".5rem 0" }}>
+            {[0, 1].map((i) => <div key={i} style={{ width: 90, height: 110, borderRadius: 10, background: "#E9E4D8", boxShadow: `0 8px 22px ${cssVars(c, f, s.shadow)["--sh1"]}, 0 2px 6px ${cssVars(c, f, s.shadow)["--sh2"]}` }} />)}
+          </div>
         </Card>
         <Card title="Fontes" desc="Uma fonte para títulos e subtítulos (nome da loja, nome do produto, seções) e outra para os demais textos.">
           <link rel="stylesheet" href={fontsHref(Object.keys(FONTS))} />

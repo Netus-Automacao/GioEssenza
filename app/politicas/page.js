@@ -7,7 +7,7 @@ export const metadata = { title: "Políticas da loja" };
 export default async function Page() {
   const s = await getSettings();
   return (
-    <main className="cat" style={cssVars(s.colors, s.fonts)}>
+    <main className="cat" style={cssVars(s.colors, s.fonts, s.shadow)}>
       <nav className="pbar"><Link href="/" className="nav-btn">Voltar</Link></nav>
       <section className="block policies">
         <h1 className="sec-title">{s.policies.title || "Políticas da loja"}</h1>

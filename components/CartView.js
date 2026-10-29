@@ -48,7 +48,7 @@ export default function CartView({ settings: s }) {
   }
 
   return (
-    <main className="cat" style={cssVars(s.colors, s.fonts)}>
+    <main className="cat" style={cssVars(s.colors, s.fonts, s.shadow)}>
       <nav className="pbar"><Link href="/" className="nav-btn">Catálogo</Link></nav>
       <section className="block cart">
         <h1 className="sec-title">Seu carrinho</h1>

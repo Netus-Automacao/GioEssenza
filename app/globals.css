@@ -553,3 +553,13 @@ button,input,select,textarea{font:inherit;color:inherit}
   mask:radial-gradient(var(--s) at 50% 100%,#000 calc(100% - 1px),#0000) top/calc(var(--s) * 2) var(--s) repeat-x,
     linear-gradient(#000 0 0) bottom/100% calc(100% - var(--s) + 1px) no-repeat}
 @media(min-width:760px){.about{--s:26px}}
+
+/* ===== v4.10: sombra configurável ===== */
+.cat{--sh1:rgba(0,0,0,.28);--sh2:rgba(0,0,0,.13)}
+.card{box-shadow:0 6px 18px var(--sh1),0 1px 4px var(--sh2)}
+.gallery-main{box-shadow:0 12px 30px var(--sh1),0 3px 8px var(--sh2)}
+.thumbs button{box-shadow:0 3px 10px var(--sh1)}
+.about-photo{box-shadow:0 16px 36px var(--sh1),0 4px 10px var(--sh2)}
+.cart-img{box-shadow:0 4px 12px var(--sh1)}
+.hero-logo{box-shadow:0 0 0 6px rgba(255,255,255,.35),0 12px 28px var(--sh1)}
+.cat-tile{box-shadow:0 4px 12px var(--sh2)}
