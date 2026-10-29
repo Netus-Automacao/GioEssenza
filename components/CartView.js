@@ -1,27 +1,41 @@
 "use client";
 import Link from "next/link";
 import { useState } from "react";
-import { brl, cssVars, waLink, saleLabel } from "@/lib/data";
+import { brl, cssVars, waLink, saleLabel, paymentLists } from "@/lib/data";
 import { useCart, setQty, removeItem, clearCart } from "@/lib/cart";
 import { WaIcon } from "./Icons";
 
 export default function CartView({ settings: s }) {
   const items = useCart();
-  const modes = [s.delivery.app && "Entrega por aplicativo, solicitado pelo cliente.", s.delivery.pickup && "Retirada pelo cliente."].filter(Boolean);
+  const modes = [s.delivery.app && "Entrega por aplicativo", s.delivery.pickup && "Retirada"].filter(Boolean);
   const [mode, setMode] = useState("");
+  const pay = s.payments.show ? paymentLists(s.payments) : { methods: [], conditions: [] };
+  const payShort = { "Pix": "Pix", "Cartão de débito": "Débito", "Dinheiro": "Dinheiro" };
+  const [method, setMethod] = useState("");
+  const [cond, setCond] = useState("");
+  const [name, setName] = useState("");
+  const [obs, setObs] = useState("");
   const [sent, setSent] = useState(false);
   const total = (items || []).reduce((a, x) => a + x.price * x.qty, 0);
   const wa = s.whatsapp_enabled && s.whatsapp;
 
   function send() {
-    const out = [`Olá! Gostaria de solicitar um pedido na *${s.name}* com os seguintes produtos:`, ""];
+    const L = "━━━━━━━━━━━━";
+    const out = [`Olá, *${s.name}*! 😊`, "Gostaria de fazer um pedido pelo catálogo.", ""];
+    if (name.trim()) out.push(`👤 *Cliente:* ${name.trim()}`, "");
+    out.push(L, "🛍️ *PEDIDO*", "");
     items.forEach((x, i) => {
-      out.push(`${i + 1}. *${x.name}*`, `Quantidade: ${saleLabel(x, x.qty)}`, ...x.lines,
-        `Valor: ${brl(x.price)}${x.qty > 1 ? ` cada — subtotal ${brl(x.price * x.qty)}` : ""}`, "");
+      out.push(`*${i + 1}. ${x.name}*`, `• Quantidade: ${saleLabel(x, x.qty)}`);
+      x.lines.forEach((l) => out.push(`• ${l}`));
+      if (x.prazo) out.push(`• Prazo de confecção: ${x.prazo}`);
+      out.push(x.qty > 1 ? `• Valor: ${brl(x.price)} cada — subtotal ${brl(x.price * x.qty)}` : `• Valor: ${brl(x.price)}`, "");
     });
-    out.push(`*Total dos produtos: ${brl(total)}*`);
-    if (mode) out.push(`Recebimento: ${mode}`);
-    out.push("", "Gostaria de dar continuidade ao atendimento.");
+    out.push(L, `💰 *Total dos produtos: ${brl(total)}*`, "");
+    if (mode) out.push(`🚚 *Recebimento:* ${mode}`);
+    if (method) out.push(`💳 *Pagamento:* ${method}`);
+    if (cond) out.push(`📌 *Condição:* ${cond}`);
+    if (obs.trim()) out.push(`📝 *Observações:* ${obs.trim()}`);
+    out.push("", "Aguardo a confirmação da agenda e do valor final. Obrigado(a)!");
     window.open(waLink(s.whatsapp, out.join("\n")), "_blank");
     setSent(true);
   }
@@ -56,6 +70,10 @@ export default function CartView({ settings: s }) {
                 </li>
               ))}
             </ul>
+            <fieldset className="pick">
+              <legend>Seu nome <em>(opcional)</em></legend>
+              <input className="opt-input" value={name} maxLength={80} placeholder="Como podemos te chamar?" onChange={(e) => setName(e.target.value)} />
+            </fieldset>
             {modes.length > 0 && (
               <fieldset className="pick">
                 <legend>Como prefere receber? <em>(opcional)</em></legend>
@@ -63,6 +81,25 @@ export default function CartView({ settings: s }) {
                 <p className="hint">{[s.delivery.app && s.delivery.app_text, s.delivery.pickup && s.delivery.pickup_text].filter(Boolean).join(" ")}</p>
               </fieldset>
             )}
+            {pay.methods.length > 0 && (
+              <fieldset className="pick">
+                <legend>Forma de pagamento <em>(opcional)</em></legend>
+                <div className="pills">{pay.methods.map((m) => {
+                  const label = payShort[m] || "Crédito por link (com taxa)";
+                  return <button key={m} className={method === label ? "on" : ""} onClick={() => setMethod(method === label ? "" : label)}>{label}</button>;
+                })}</div>
+              </fieldset>
+            )}
+            {pay.conditions.length > 0 && (
+              <fieldset className="pick">
+                <legend>Condição de pagamento <em>(opcional)</em></legend>
+                <div className="pills">{pay.conditions.map((m) => <button key={m} className={cond === m ? "on" : ""} onClick={() => setCond(cond === m ? "" : m)}>{m}</button>)}</div>
+              </fieldset>
+            )}
+            <fieldset className="pick">
+              <legend>Observações <em>(opcional)</em></legend>
+              <textarea className="opt-input" rows={3} maxLength={400} value={obs} placeholder="Data desejada, tema, dúvidas…" onChange={(e) => setObs(e.target.value)} />
+            </fieldset>
             <div className="cart-total"><span>Total dos produtos</span><strong>{brl(total)}</strong></div>
             <p className="hint">Valores sem entrega. O pedido é confirmado no atendimento pelo WhatsApp.</p>
             {wa && <button className="btn block" onClick={send}><WaIcon /> Enviar pedido pelo WhatsApp</button>}

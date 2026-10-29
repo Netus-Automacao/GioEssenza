@@ -76,7 +76,7 @@ export default function ProductView({ settings: s, product: p, categoryName, pre
       else vals.forEach((v, u) => v && lines.push(`${f.label} — unidade ${u + 1}: ${v}`));
     });
     const key = JSON.stringify([p.id, lines]);
-    addToCart({ key, id: p.id, name: p.name, photo: p.photos?.[0] || null, qty, max, price, lines, sale_type: p.sale_type || "unit", kit_qty: kit ? kitQty : p.kit_qty || null, kit_unit: kitUnit(p), sale_note: p.sale_note || "" });
+    addToCart({ key, id: p.id, name: p.name, photo: p.photos?.[0] || null, qty, max, price, lines, sale_type: p.sale_type || "unit", kit_qty: kit ? kitQty : p.kit_qty || null, kit_unit: kitUnit(p), prazo: p.specs?.prazo || "", sale_note: p.sale_note || "" });
     setAdded(true); setErr("");
   }
 
