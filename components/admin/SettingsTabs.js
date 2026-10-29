@@ -248,6 +248,7 @@ export function TabCores({ s, set, prods, cats }) {
 
 export function TabHorarios({ s, set }) {
   const h = s.hours;
+  const setH = (patch) => set({ hours: { ...h, holiday: { ...h.holiday, ...patch } } });
   const setDay = (i, patch) => set({ hours: { ...h, days: h.days.map((d, j) => (j === i ? { ...d, ...patch } : d)) } });
   return (
     <>
@@ -267,7 +268,15 @@ export function TabHorarios({ s, set }) {
               {d.open && d.end <= d.start && <em className="ad-err">O horário final precisa ser depois do inicial.</em>}
             </div>
           ))}
+          <div className={`ad-day${h.holiday.open ? "" : " off"}`}>
+            <label className="ad-check"><input type="checkbox" checked={h.holiday.open} onChange={(e) => setH({ open: e.target.checked })} /> Feriados</label>
+            <input type="time" value={h.holiday.start} disabled={!h.holiday.open} onChange={(e) => setH({ start: e.target.value })} aria-label="Abre em feriados" />
+            <span>às</span>
+            <input type="time" value={h.holiday.end} disabled={!h.holiday.open} onChange={(e) => setH({ end: e.target.value })} aria-label="Fecha em feriados" />
+            {!h.holiday.open && <em>Fechado</em>}
+          </div>
         </div>
+        <Toggle label="Mostrar a linha “Feriados” no catálogo" checked={h.holiday.show} onChange={(v) => setH({ show: v })} />
       </Card>
     </>
   );

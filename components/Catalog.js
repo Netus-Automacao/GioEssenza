@@ -257,6 +257,9 @@ export default function Catalog({ settings: s, categories = [], products = [], p
                 {s.hours.days.map((d, i) => (
                   <li key={i}><span>{DAYS[i]}</span><span>{d.open ? `${hourLabel(d.start)} às ${hourLabel(d.end)}` : "Fechado"}</span></li>
                 ))}
+                {s.hours.holiday.show && (
+                  <li><span>Feriados</span><span>{s.hours.holiday.open ? `${hourLabel(s.hours.holiday.start)} às ${hourLabel(s.hours.holiday.end)}` : "Fechado"}</span></li>
+                )}
               </ul>
             </div>
           )}
