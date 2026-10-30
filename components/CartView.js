@@ -107,15 +107,12 @@ export default function CartView({ settings: s }) {
               </fieldset>
             )}
             {pay.conditions.length > 0 && (
-              <div className="pay-alert" role="note">
-                <span className="pay-alert-icon" aria-hidden="true">⚠️</span>
-                <div>
-                  <strong>Condição de pagamento</strong>
-                  {pay.conditions.length === 1 && s.payments.full
-                    ? <p>Para que o pedido seja confirmado, é necessário o pagamento integral do valor.</p>
-                    : <p>{pay.conditions.join(" ou ")}.</p>}
-                </div>
-              </div>
+              <p className="pay-alert" role="note">
+                <span aria-hidden="true">⚠️</span>
+                {pay.conditions.length === 1 && s.payments.full
+                  ? "Para confirmar o pedido, é necessário o pagamento integral."
+                  : `${pay.conditions.join(" ou ")}.`}
+              </p>
             )}
             <fieldset className="pick">
               <legend>Data desejada ou do evento</legend>

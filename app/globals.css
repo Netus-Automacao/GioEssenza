@@ -580,3 +580,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 .pay-alert strong{display:block;font-family:var(--f-display);font-weight:var(--title-weight);margin-bottom:.2rem}
 .pay-alert p{margin:0;line-height:1.5;font-size:.95rem}
 .mode-info{margin-top:.7rem;padding:.8rem 1rem;border-radius:12px;background:color-mix(in srgb,var(--accent) 22%,var(--bg));border-left:3px solid var(--primary);font-size:.93rem;line-height:1.5}
+/* v4.21: aviso de pagamento discreto */
+.pay-alert{display:flex;gap:.45rem;align-items:center;margin:1rem 0 0;padding:.45rem .75rem;border-radius:10px;
+  background:#FFF6E0;border:1px solid #EFD9A0;color:#6A5214;font-size:.82rem;line-height:1.35;width:fit-content;max-width:100%}
+.pay-alert span{font-size:.95rem}
