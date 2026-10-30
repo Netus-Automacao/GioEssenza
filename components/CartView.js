@@ -14,7 +14,9 @@ export default function CartView({ settings: s }) {
   const [method, setMethod] = useState("");
   const [cond, setCond] = useState("");
   const [name, setName] = useState("");
-  const [obs, setObs] = useState("");
+  const [date, setDate] = useState("");
+  const [theme, setTheme] = useState("");
+  const [doubts, setDoubts] = useState("");
   const [sent, setSent] = useState(false);
   const total = (items || []).reduce((a, x) => a + x.price * x.qty, 0);
   const wa = s.whatsapp_enabled && s.whatsapp;
@@ -41,7 +43,9 @@ export default function CartView({ settings: s }) {
     if (mode) out.push(`🚚 *Recebimento:* ${mode}`);
     if (method) out.push(`💳 *Pagamento:* ${method}`);
     if (cond) out.push(`📌 *Condição:* ${cond}`);
-    if (obs.trim()) out.push(`📝 *Observações:* ${obs.trim()}`);
+    if (date) out.push(`📅 *Data desejada / do evento:* ${date.split("-").reverse().join("/")}`);
+    if (theme.trim()) out.push(`🎨 *Tema para confecção:* ${theme.trim()}`);
+    if (doubts.trim()) out.push(`❓ *Dúvidas:* ${doubts.trim()}`);
     out.push("", "Aguardo a confirmação da agenda e do valor final. Obrigado(a)!");
     window.open(waLink(s.whatsapp, out.join("\n")), "_blank");
     setSent(true);
@@ -104,9 +108,18 @@ export default function CartView({ settings: s }) {
               </fieldset>
             )}
             <fieldset className="pick">
-              <legend>Observações</legend>
-              <textarea className="opt-input" rows={3} maxLength={400} value={obs} placeholder="Data desejada, tema, dúvidas… (se não houver, deixe em branco)" onChange={(e) => setObs(e.target.value)} />
+              <legend>Data desejada ou do evento</legend>
+              <input className="opt-input" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
             </fieldset>
+            <fieldset className="pick">
+              <legend>Tema para confecção do produto</legend>
+              <input className="opt-input" value={theme} maxLength={200} placeholder="Ex.: floral, Stitch, tons de rosa…" onChange={(e) => setTheme(e.target.value)} />
+            </fieldset>
+            <fieldset className="pick">
+              <legend>Dúvidas</legend>
+              <textarea className="opt-input" rows={3} maxLength={400} value={doubts} placeholder="Escreva aqui se tiver alguma dúvida" onChange={(e) => setDoubts(e.target.value)} />
+            </fieldset>
+            <p className="hint">Data, tema e dúvidas não são obrigatórios.</p>
             <div className="cart-total"><span>Total dos produtos</span><strong>{brl(total)}</strong></div>
             <p className="hint">Valores sem entrega. O pedido é confirmado no atendimento pelo WhatsApp.</p>
             {err && <p className="err" role="alert">{err}</p>}
