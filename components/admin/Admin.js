@@ -6,10 +6,11 @@ import { TabGeral, TabIdentidade, TabBanner, TabCores, TabHorarios, TabEntrega, 
 import Products from "./Products";
 
 import Categories from "./Categories";
+import Orders from "./Orders";
 
 const TABS = [
   ["dashboard", "Geral"], ["loja", "Identidade da loja"], ["banner", "Banner de destaque"], ["cores", "Cores e fontes"],
-  ["horarios", "Horário de funcionamento"], ["entrega", "Entrega e retirada"], ["pagamento", "Pagamento"], ["sobre", "Sobre nós"], ["politicas", "Políticas"], ["categorias", "Categorias"], ["produtos", "Produtos"],
+  ["horarios", "Horário de funcionamento"], ["entrega", "Entrega e retirada"], ["pagamento", "Pagamento"], ["sobre", "Sobre nós"], ["politicas", "Políticas"], ["categorias", "Categorias"], ["produtos", "Produtos"], ["pedidos", "Pedidos"],
 ];
 const go = (t) => window.history.pushState(null, "", `/admin/${t}`);
 
@@ -49,6 +50,7 @@ function Dashboard({ initialTab }) {
   const [cats, setCats] = useState([]);
   const [prods, setProds] = useState([]);
   const [toast, setToast] = useState("");
+  const [newOrders, setNewOrders] = useState(0);
   const [saving, setSaving] = useState(false);
 
   async function load() {
@@ -57,6 +59,7 @@ function Dashboard({ initialTab }) {
       supabase.from("categories").select("*").order("position"),
       supabase.from("products").select("*").order("position").order("created_at"),
     ]);
+    supabase.from("orders").select("id", { count: "exact", head: true }).eq("status", "novo").then(({ count }) => setNewOrders(count || 0), () => {});
     const st = withDefaults(s.data?.data);
     setSaved(st); setDraft(st); setCats(c.data || []); setProds(p.data || []);
   }
@@ -81,13 +84,13 @@ function Dashboard({ initialTab }) {
   }
 
   const props = { s: draft, set, save, cats, prods, setToast, setTab };
-  const isSettings = !["produtos", "categorias"].includes(tab);
+  const isSettings = !["produtos", "categorias", "pedidos"].includes(tab);
 
   return (
     <div className="ad">
       <aside className="ad-side">
         <div className="ad-brand">{draft.logo && <img src={draft.logo} alt="" />}<div><strong>{draft.name}</strong><span>Painel</span></div></div>
-        <nav>{TABS.map(([k, l]) => <button key={k} className={tab === k ? "on" : ""} onClick={() => setTab(k)}>{l}</button>)}</nav>
+        <nav>{TABS.map(([k, l]) => <button key={k} className={tab === k ? "on" : ""} onClick={() => setTab(k)}>{l}{k === "pedidos" && newOrders > 0 && <span className="ad-badge">{newOrders}</span>}</button>)}</nav>
         <div className="ad-side-foot">
           <a href="/" target="_blank" rel="noreferrer">Ver catálogo</a>
           <button onClick={() => supabase.auth.signOut()}>Sair</button>
@@ -103,6 +106,7 @@ function Dashboard({ initialTab }) {
         {tab === "pagamento" && <TabPagamento {...props} />}
         {tab === "sobre" && <TabSobre {...props} />}
         {tab === "politicas" && <TabPoliticas {...props} />}
+        {tab === "pedidos" && <Orders setToast={setToast} onCount={setNewOrders} />}
         {tab === "categorias" && <Categories cats={cats} setCats={setCats} prods={prods} setToast={setToast} setTab={setTab} />}
         {tab === "produtos" && <Products key={newProduct} startNew={newProduct > 0} settings={saved} cats={cats} prods={prods} setProds={setProds} setToast={setToast} setTab={setTab} />}
         {isSettings && (dirty || saving) && (

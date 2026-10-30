@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { brl, cssVars, waLink, saleLabel, paymentLists } from "@/lib/data";
 import { useCart, setQty, removeItem, clearCart } from "@/lib/cart";
+import { supabase } from "@/lib/supabase";
 import { WaIcon } from "./Icons";
 
 export default function CartView({ settings: s }) {
@@ -47,7 +48,16 @@ export default function CartView({ settings: s }) {
     if (theme.trim()) out.push(`• *Tema para confecção:* ${theme.trim()}`);
     if (doubts.trim()) out.push(`• *Dúvidas:* ${doubts.trim()}`);
     out.push("", "", "Aguardo a confirmação do pedido. Obrigado(a)!");
-    window.open(waLink(s.whatsapp, out.join("\n")), "_blank");
+    const message = out.join("\n");
+    window.open(waLink(s.whatsapp, message), "_blank");
+    // registra o pedido no painel e esvazia o carrinho
+    const order = {
+      customer: name.trim(), total, delivery: mode, payment: method, condition: pay.conditions.join(" ou "),
+      wanted_date: date || null, theme: theme.trim(), doubts: doubts.trim(), message,
+      items: items.map((x) => ({ id: x.id, name: x.name, qty: x.qty, price: x.price, lines: x.lines, photo: x.photo, label: saleLabel(x, x.qty) })),
+    };
+    supabase.from("orders").insert(order).then(() => {}, () => {});
+    clearCart();
     setSent(true);
   }
 
@@ -56,6 +66,12 @@ export default function CartView({ settings: s }) {
       <nav className="pbar"><Link href="/" className="nav-btn">Catálogo</Link></nav>
       <section className="block cart">
         <h1 className="sec-title">Seu carrinho</h1>
+        {sent && (
+          <div className="sent-ok">
+            <strong>Pedido enviado! 🎉</strong>
+            <p>Confirme o envio da mensagem no WhatsApp. Em breve retornaremos com a confirmação.</p>
+          </div>
+        )}
         {items === null ? null : items.length === 0 ? (
           <div className="empty"><p>Seu carrinho está vazio.</p><Link className="btn" href="/">Ver produtos</Link></div>
         ) : (
@@ -130,10 +146,6 @@ export default function CartView({ settings: s }) {
             {err && <p className="err" role="alert">{err}</p>}
             {wa && <button className="btn block" onClick={send}><WaIcon /> Enviar pedido pelo WhatsApp</button>}
             <Link href="/" className="btn ghost block">Continuar comprando</Link>
-            {sent && (
-              <p className="ok">Confirme o envio da mensagem no WhatsApp. Já enviou?{" "}
-                <button className="link-btn" onClick={() => { clearCart(); setSent(false); }}>Esvaziar carrinho</button></p>
-            )}
           </>
         )}
       </section>
