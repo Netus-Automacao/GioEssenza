@@ -125,7 +125,6 @@ export default function CartView({ settings: s }) {
               <legend>Dúvidas <em>(opcional)</em></legend>
               <textarea className="opt-input" rows={3} maxLength={400} value={doubts} placeholder="Escreva aqui se tiver alguma dúvida" onChange={(e) => setDoubts(e.target.value)} />
             </fieldset>
-            <p className="hint">Apenas o campo de dúvidas é opcional.</p>
             <div className="cart-total"><span>Total dos produtos</span><strong>{brl(total)}</strong></div>
             <p className="hint">Valores sem entrega. O pedido é confirmado no atendimento pelo WhatsApp.</p>
             {err && <p className="err" role="alert">{err}</p>}
