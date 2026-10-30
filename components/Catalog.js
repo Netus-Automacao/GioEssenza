@@ -172,6 +172,8 @@ export default function Catalog({ settings: s, categories = [], products = [], p
 
   const pay = paymentLists(s.payments);
   const showPay = s.payments.show && (pay.methods.length || pay.conditions.length);
+  const reviews = (s.reviews?.items || []).filter((x) => x.name?.trim() && x.text?.trim());
+  const showReviews = s.reviews?.enabled && reviews.length > 0;
   const about = s.about;
   const showAbout = about.enabled && (about.text || about.photo);
 
@@ -243,6 +245,8 @@ export default function Catalog({ settings: s, categories = [], products = [], p
         </section>
       )}
 
+      {showReviews && <Reviews r={s.reviews} items={reviews} />}
+
       {(s.hours.show || delivery.length > 0 || showPay) && (
         <section className="block info">
           {showPay && (
@@ -281,5 +285,37 @@ export default function Catalog({ settings: s, categories = [], products = [], p
       </footer>
       {wa && <a className="wa-float" href={waLink(s.whatsapp, `Olá! Vim pelo catálogo da ${s.name}.`)} target="_blank" rel="noreferrer" aria-label="WhatsApp"><WaIcon size={26} /></a>}
     </main>
+  );
+}
+
+function Reviews({ r, items }) {
+  const [cur, setCur] = useState(0);
+  const ref = useRef(null);
+  const onScroll = () => { const el = ref.current; if (el) setCur(Math.round(el.scrollLeft / el.clientWidth)); };
+  const go = (i) => ref.current?.scrollTo({ left: i * ref.current.clientWidth, behavior: "smooth" });
+  return (
+    <section className="reviews">
+      <svg className="reviews-icon" viewBox="0 0 64 56" aria-hidden="true">
+        <path d="M5 4h28a3 3 0 0 1 3 3v15a3 3 0 0 1-3 3H16l-7 6v-6H5a3 3 0 0 1-3-3V7a3 3 0 0 1 3-3z" fill="var(--accent)" stroke="var(--title)" strokeWidth="2" strokeLinejoin="round" />
+        <path d="M19 11.5c0-2 2.6-3 4 -1 1.4-2 4-1 4 1 0 2.6-4 5-4 5s-4-2.4-4-5z" fill="#fff" />
+        <path d="M31 20h27a3 3 0 0 1 3 3v15a3 3 0 0 1-3 3h-4v6l-7-6H31a3 3 0 0 1-3-3V23a3 3 0 0 1 3-3z" fill="var(--soft)" stroke="var(--title)" strokeWidth="2" strokeLinejoin="round" />
+        <circle cx="44.5" cy="30.5" r="6" fill="#fff" stroke="var(--title)" strokeWidth="1.6" />
+        <path d="M41.6 29.4q1-1 2 0M45.4 29.4q1-1 2 0M42 32.4q2.5 2 5 0" fill="none" stroke="var(--title)" strokeWidth="1.3" strokeLinecap="round" />
+      </svg>
+      <h2>{r.title} {r.highlight && <b>{r.highlight}</b>}</h2>
+      <div className="reviews-track" ref={ref} onScroll={onScroll}>
+        {items.map((it, i) => (
+          <article key={i} className="review-card">
+            <h3>{it.name}</h3>
+            {it.text.split("\n").filter(Boolean).map((l, j) => <p key={j}>{l}</p>)}
+          </article>
+        ))}
+      </div>
+      {items.length > 1 && (
+        <div className="reviews-dots">
+          {items.map((_, i) => <button key={i} aria-label={`Avaliação ${i + 1}`} className={i === cur ? "on" : ""} onClick={() => go(i)} />)}
+        </div>
+      )}
+    </section>
   );
 }

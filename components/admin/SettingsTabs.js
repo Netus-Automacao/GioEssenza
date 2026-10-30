@@ -348,6 +348,42 @@ export function TabSobre({ s, set, save, prods, cats }) {
   );
 }
 
+export function TabAvaliacoes({ s, set, prods, cats }) {
+  const r = s.reviews;
+  const setR = (patch) => set({ reviews: { ...r, ...patch } });
+  const items = r.items || [];
+  const setItem = (i, patch) => setR({ items: items.map((it, j) => (j === i ? { ...it, ...patch } : it)) });
+  const move = (i, d) => { const n = [...items]; const j = i + d; if (j < 0 || j >= n.length) return; [n[i], n[j]] = [n[j], n[i]]; setR({ items: n }); };
+  return (
+    <div className="ad-split">
+      <div>
+        <h1 className="ad-h1">Avaliações</h1>
+        <Card title="Exibição">
+          <Toggle label="Mostrar as avaliações no catálogo" checked={r.enabled} onChange={(v) => setR({ enabled: v })} />
+          <Field label="Título"><input value={r.title} maxLength={60} onChange={(e) => setR({ title: e.target.value })} /></Field>
+          <Field label="Palavra em destaque (aparece em negrito no fim do título)"><input value={r.highlight} maxLength={30} onChange={(e) => setR({ highlight: e.target.value })} /></Field>
+        </Card>
+        <Card title="Avaliações dos clientes" desc="Cole aqui os elogios que chegam pelo WhatsApp, Instagram ou Google. Lembre de salvar no fim.">
+          {items.length === 0 && <p className="ad-muted">Nenhuma avaliação ainda.</p>}
+          {items.map((it, i) => (
+            <div key={i} className="ad-review">
+              <Field label={`Nome do cliente ${i + 1}`}><input value={it.name} maxLength={60} placeholder="Ex.: Thamires Cambui" onChange={(e) => setItem(i, { name: e.target.value })} /></Field>
+              <Field label="Avaliação"><textarea rows={4} maxLength={600} value={it.text} placeholder="O que o cliente escreveu" onChange={(e) => setItem(i, { text: e.target.value })} /></Field>
+              <div className="ad-row">
+                <button className="ad-btn ghost sm" onClick={() => move(i, -1)} disabled={i === 0}>↑ Subir</button>
+                <button className="ad-btn ghost sm" onClick={() => move(i, 1)} disabled={i === items.length - 1}>↓ Descer</button>
+                <button className="ad-btn ghost sm danger" onClick={() => confirm("Remover esta avaliação?") && setR({ items: items.filter((_, j) => j !== i) })}>Remover</button>
+              </div>
+            </div>
+          ))}
+          <button className="ad-btn" onClick={() => setR({ items: [...items, { name: "", text: "" }] })}>+ Adicionar avaliação</button>
+        </Card>
+      </div>
+      <Preview s={s} prods={prods} cats={cats} />
+    </div>
+  );
+}
+
 export function TabPoliticas({ s, set }) {
   const p = s.policies;
   const setP = (patch) => set({ policies: { ...p, ...patch } });

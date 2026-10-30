@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { withDefaults } from "@/lib/data";
-import { TabGeral, TabIdentidade, TabBanner, TabCores, TabHorarios, TabEntrega, TabSobre, TabPoliticas, TabPagamento } from "./SettingsTabs";
+import { TabGeral, TabIdentidade, TabBanner, TabCores, TabHorarios, TabEntrega, TabSobre, TabAvaliacoes, TabPoliticas, TabPagamento } from "./SettingsTabs";
 import Products from "./Products";
 
 import Categories from "./Categories";
@@ -10,7 +10,7 @@ import Orders from "./Orders";
 
 const TABS = [
   ["dashboard", "Geral"], ["loja", "Identidade da loja"], ["banner", "Banner de destaque"], ["cores", "Cores e fontes"],
-  ["horarios", "Horário de funcionamento"], ["entrega", "Entrega e retirada"], ["pagamento", "Pagamento"], ["sobre", "Sobre nós"], ["politicas", "Políticas"], ["categorias", "Categorias"], ["produtos", "Produtos"], ["pedidos", "Pedidos"],
+  ["horarios", "Horário de funcionamento"], ["entrega", "Entrega e retirada"], ["pagamento", "Pagamento"], ["sobre", "Sobre nós"], ["avaliacoes", "Avaliações"], ["politicas", "Políticas"], ["categorias", "Categorias"], ["produtos", "Produtos"], ["pedidos", "Pedidos"],
 ];
 const go = (t) => window.history.pushState(null, "", `/admin/${t}`);
 
@@ -105,6 +105,7 @@ function Dashboard({ initialTab }) {
         {tab === "entrega" && <TabEntrega {...props} />}
         {tab === "pagamento" && <TabPagamento {...props} />}
         {tab === "sobre" && <TabSobre {...props} />}
+        {tab === "avaliacoes" && <TabAvaliacoes {...props} />}
         {tab === "politicas" && <TabPoliticas {...props} />}
         {tab === "pedidos" && <Orders setToast={setToast} onCount={setNewOrders} settings={saved} saveSettings={save} />}
         {tab === "categorias" && <Categories cats={cats} setCats={setCats} prods={prods} setToast={setToast} setTab={setTab} />}
