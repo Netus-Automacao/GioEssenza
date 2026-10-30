@@ -30,24 +30,21 @@ export default function CartView({ settings: s }) {
     if (pay.methods.length && !method) return setErr("Escolha a forma de pagamento.");
     if (!date) return setErr("Informe a data desejada ou do evento.");
     if (!theme.trim()) return setErr("Informe o tema para confecção do produto.");
-    const L = "━━━━━━━━━━━━";
-    const out = [`Olá, *${s.name}*! 😊`, "Gostaria de fazer um pedido pelo catálogo.", ""];
-    if (name.trim()) out.push(`👤 *Cliente:* ${name.trim()}`, "");
-    out.push(L, "🛍️ *PEDIDO*", "");
+    const L = "━━━━━━━━━━━━━";
+    const out = [`Olá, *${s.name}*! 😊`, "Gostaria de fazer um pedido.", "", `👤 *Cliente:* ${name.trim()}`, "", L, "*DADOS DO PEDIDO*", ""];
     items.forEach((x, i) => {
-      out.push(`*${i + 1}. ${x.name}*`, `• Quantidade: ${saleLabel(x, x.qty)}`);
-      x.lines.forEach((l) => out.push(`• ${l}`));
-      if (x.prazo) out.push(`• Prazo de confecção: ${x.prazo}`);
-      out.push(x.qty > 1 ? `• Valor: ${brl(x.price)} cada — subtotal ${brl(x.price * x.qty)}` : `• Valor: ${brl(x.price)}`, "");
+      out.push(`• *Item ${i + 1}: ${x.name}*`, `• Quantidade: ${saleLabel(x, x.qty)}`);
+      x.lines.filter((l) => !/^Kit:/.test(l)).forEach((l) => out.push(`• ${l.replace(/::/g, ":")}`));
+      out.push(x.qty > 1 ? `• Valor: ${brl(x.price)} cada (subtotal ${brl(x.price * x.qty)})` : `• Valor: ${brl(x.price)}`, "");
     });
-    out.push(L, `💰 *Total dos produtos: ${brl(total)}*`, "");
-    if (mode) out.push(`🚚 *Recebimento:* ${mode}`);
-    if (method) out.push(`💳 *Pagamento:* ${method}`);
-    if (pay.conditions.length) out.push(`📌 *Condição:* ${pay.conditions.join(" ou ")}`);
-    if (date) out.push(`📅 *Data desejada / do evento:* ${date.split("-").reverse().join("/")}`);
-    if (theme.trim()) out.push(`🎨 *Tema para confecção:* ${theme.trim()}`);
-    if (doubts.trim()) out.push(`❓ *Dúvidas:* ${doubts.trim()}`);
-    out.push("", "Aguardo a confirmação da agenda e do valor final. Obrigado(a)!");
+    out.push(L, `*VALOR TOTAL: ${brl(total)}*`, "");
+    if (mode) out.push(`• *Recebimento:* ${mode}`);
+    if (method) out.push(`• *Pagamento:* ${method}`);
+    if (pay.conditions.length) out.push(`• *Condição:* ${pay.conditions.join(" ou ")}`);
+    if (date) out.push(`• *Data desejada / do evento:* ${date.split("-").reverse().join("/")}`);
+    if (theme.trim()) out.push(`• *Tema para confecção:* ${theme.trim()}`);
+    if (doubts.trim()) out.push(`• *Dúvidas:* ${doubts.trim()}`);
+    out.push("", "", "Aguardo a confirmação do pedido. Obrigado(a)!");
     window.open(waLink(s.whatsapp, out.join("\n")), "_blank");
     setSent(true);
   }
