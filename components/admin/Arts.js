@@ -7,11 +7,12 @@ import { Toggle, Field, Card } from "./ui";
 const typeOf = (settings, id) => (settings.mockups || DEFAULT_MOCKUPS).find((t) => t.id === id) || null;
 
 // gera mockup + miniatura a partir da arte (arquivo novo ou URL já salva)
-async function makeAssets(src, type, adjust) {
+// webp guarda a transparência do fundo (jpg não guarda)
+async function makeAssets(src, type, adjust, bg) {
   const img = await loadImage(src);
-  const canvas = renderMockup(img, type, adjust);
-  const [mock, thumb] = await Promise.all([toBlob(canvas, "image/jpeg", 0.9), thumbOf(canvas)]);
-  const [mockup, th] = await Promise.all([uploadArtFile(mock, "mockups", "jpg"), uploadArtFile(thumb, "miniaturas", thumb.type === "image/webp" ? "webp" : "jpg")]);
+  const canvas = renderMockup(img, type, adjust, bg);
+  const [mock, thumb] = await Promise.all([toBlob(canvas, "image/webp", 0.92), thumbOf(canvas)]);
+  const [mockup, th] = await Promise.all([uploadArtFile(mock, "mockups", mock.type === "image/webp" ? "webp" : "png"), uploadArtFile(thumb, "miniaturas", thumb.type === "image/webp" ? "webp" : "jpg")]);
   return { mockup, thumb: th };
 }
 
@@ -22,6 +23,7 @@ export default function Arts({ settings, saveSettings, setToast }) {
   const [missing, setMissing] = useState(false);
   const arts = settings.arts || {};
   const types = settings.mockups || DEFAULT_MOCKUPS;
+  const bg = arts.bg || null;
 
   async function load() {
     const { data, error } = await supabase.from("art_galleries").select("*").order("position").order("created_at");
@@ -55,7 +57,7 @@ export default function Arts({ settings, saveSettings, setToast }) {
     setGals(gals.filter((x) => x.id !== g.id)); setToast("Galeria excluída");
   }
 
-  if (open) return <GalleryEditor g={open} types={types} setToast={setToast} onBack={() => { setOpen(null); load(); }} onSaved={(d) => setGals(gals.map((x) => (x.id === d.id ? d : x)))} />;
+  if (open) return <GalleryEditor g={open} types={types} bg={bg} setToast={setToast} onBack={() => { setOpen(null); load(); }} onSaved={(d) => setGals(gals.map((x) => (x.id === d.id ? d : x)))} />;
 
   return (
     <>
@@ -86,8 +88,36 @@ export default function Arts({ settings, saveSettings, setToast }) {
           </ul>
         )}
       </Card>
+      <MockupBg bg={bg} save={(b) => saveSettings({ ...settings, arts: { ...arts, bg: b } })} />
       <MockupTypes types={types} save={(mockups) => saveSettings({ ...settings, mockups })} />
     </>
+  );
+}
+
+function MockupBg({ bg, save }) {
+  const [color, setColor] = useState(bg?.color || "#FFFFFF");
+  const [op, setOp] = useState(bg?.opacity ?? 1);
+  const dirty = color !== (bg?.color || "#FFFFFF") || op !== (bg?.opacity ?? 1);
+  return (
+    <Card title="Fundo dos mockups" desc="Escolha a cor que mais destaca as artes. Vale para os mockups gerados depois; nas galerias antigas use “Gerar mockups de novo”.">
+      <div className="ad-row" style={{ alignItems: "center", gap: "1rem", flexWrap: "wrap" }}>
+        <div className="ad-bgprev"><span style={{ background: color, opacity: op }} /><b>Arte</b></div>
+        <label className="ad-field" style={{ margin: 0 }}><span>Cor do fundo</span>
+          <div style={{ display: "flex", gap: ".5rem", alignItems: "center" }}>
+            <input type="color" value={color} onChange={(e) => setColor(e.target.value.toUpperCase())} style={{ width: 48, height: 40, padding: 0, border: 0, background: "none" }} />
+            <input value={color} maxLength={7} style={{ width: 100 }} onChange={(e) => /^#[0-9a-fA-F]{0,6}$/.test(e.target.value) && setColor(e.target.value.toUpperCase())} />
+          </div>
+        </label>
+      </div>
+      <label className="ad-field"><span>Transparência do fundo: {Math.round((1 - op) * 100)}%</span>
+        <input type="range" min="0" max="1" step="0.05" value={1 - op} onChange={(e) => setOp(Math.round((1 - Number(e.target.value)) * 100) / 100)} />
+        <em>0% = cor sólida · 100% = fundo transparente (aparece a cor do catálogo por trás).</em>
+      </label>
+      <div className="ad-row">
+        <button className="ad-btn ghost" onClick={() => { setColor("#FFFFFF"); setOp(1); }}>Voltar ao branco</button>
+        {dirty && <button className="ad-btn" onClick={() => save({ color: /^#[0-9A-F]{6}$/.test(color) ? color : "#FFFFFF", opacity: op })}>Salvar fundo</button>}
+      </div>
+    </Card>
   );
 }
 
@@ -133,7 +163,7 @@ function MockupTypes({ types, save }) {
   );
 }
 
-function GalleryEditor({ g, types, setToast, onBack, onSaved }) {
+function GalleryEditor({ g, types, bg, setToast, onBack, onSaved }) {
   const [form, setForm] = useState(g);
   const [items, setItems] = useState(null);
   const [busy, setBusy] = useState("");
@@ -165,7 +195,7 @@ function GalleryEditor({ g, types, setToast, onBack, onSaved }) {
         const f = files[k];
         if (!/^image\/(jpeg|png|webp)$/.test(f.type)) throw new Error(`${f.name}: use JPG, PNG ou WebP.`);
         const original = await uploadArtFile(f, "originais");
-        const { mockup, thumb } = await makeAssets(f, type, DEFAULT_ADJUST);
+        const { mockup, thumb } = await makeAssets(f, type, DEFAULT_ADJUST, bg);
         const { data, error } = await supabase.from("art_items").insert({ gallery_id: g.id, original, mockup, thumb, adjust: DEFAULT_ADJUST, position: pos++ }).select().single();
         if (error) throw error;
         added.push(data); setItems((x) => [...x, data]);
@@ -176,7 +206,7 @@ function GalleryEditor({ g, types, setToast, onBack, onSaved }) {
 
   async function regen(item, adjust, newOriginal) {
     const original = newOriginal ? await uploadArtFile(newOriginal, "originais") : item.original;
-    const { mockup, thumb } = await makeAssets(newOriginal || item.original, type, adjust);
+    const { mockup, thumb } = await makeAssets(newOriginal || item.original, type, adjust, bg);
     const { data, error } = await supabase.from("art_items").update({ original, mockup, thumb, adjust }).eq("id", item.id).select().single();
     if (error) throw error;
     removeStored([item.mockup, item.thumb, newOriginal ? item.original : null]);
@@ -188,7 +218,7 @@ function GalleryEditor({ g, types, setToast, onBack, onSaved }) {
       setBusy(`Gerando mockup ${k + 1} de ${items.length}…`);
       const it = items[k];
       try {
-        const { mockup, thumb } = await makeAssets(it.original, t, it.adjust);
+        const { mockup, thumb } = await makeAssets(it.original, t, it.adjust, bg);
         const { data } = await supabase.from("art_items").update({ mockup, thumb }).eq("id", it.id).select().single();
         removeStored([it.mockup, it.thumb]);
         setItems((x) => x.map((i) => (i.id === it.id ? data : i)));
@@ -261,7 +291,7 @@ function GalleryEditor({ g, types, setToast, onBack, onSaved }) {
           setBusy("Substituindo arte…"); try { await regen(it, it.adjust, f); setToast("Arte substituída"); } catch (err) { setToast(err.message); } setBusy("");
         }} />
       </Card>
-      {adjusting && <Adjuster item={adjusting} type={type} onClose={() => setAdjusting(null)}
+      {adjusting && <Adjuster item={adjusting} type={type} bg={bg} onClose={() => setAdjusting(null)}
         onSave={async (adj) => { setBusy("Gerando mockup…"); try { await regen(adjusting, adj); setToast("Mockup atualizado"); setAdjusting(null); } catch (err) { setToast(err.message); } setBusy(""); }} />}
       {preview && (
         <div className="ad-modal crop" role="dialog" aria-label="Pré-visualização">
@@ -278,17 +308,17 @@ function GalleryEditor({ g, types, setToast, onBack, onSaved }) {
   );
 }
 
-function Adjuster({ item, type, onClose, onSave }) {
+function Adjuster({ item, type, bg, onClose, onSave }) {
   const [a, setA] = useState({ ...DEFAULT_ADJUST, ...(item.adjust || {}) });
   const [img, setImg] = useState(null);
   const box = useRef(null);
   useEffect(() => { loadImage(item.original).then(setImg).catch(() => {}); }, [item.original]);
   useEffect(() => {
     if (!img || !box.current) return;
-    const c = renderMockup(img, type, a);
+    const c = renderMockup(img, type, a, bg);
     c.style.width = "100%"; c.style.height = "auto"; c.style.borderRadius = "12px";
     box.current.replaceChildren(c);
-  }, [img, a, type]);
+  }, [img, a, type, bg]);
   const slider = (k, label, min, max, step, fmt) => (
     <label className="ad-field"><span>{label}: {fmt(a[k])}</span>
       <input type="range" min={min} max={max} step={step} value={a[k]} onChange={(e) => setA({ ...a, [k]: Number(e.target.value) })} />
