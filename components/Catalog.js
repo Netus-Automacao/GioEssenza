@@ -245,8 +245,6 @@ export default function Catalog({ settings: s, categories = [], products = [], p
         </section>
       )}
 
-      {showReviews && <Reviews r={s.reviews} items={reviews} />}
-
       {(s.hours.show || delivery.length > 0 || showPay) && (
         <section className="block info">
           {showPay && (
@@ -278,6 +276,8 @@ export default function Catalog({ settings: s, categories = [], products = [], p
           )}
         </section>
       )}
+
+      {showReviews && <Reviews r={s.reviews} items={reviews} />}
 
       <footer className="foot">
         {s.address && <p className="foot-addr-text">{s.address}</p>}
