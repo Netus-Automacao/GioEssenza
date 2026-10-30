@@ -175,11 +175,14 @@ function MockupTypes({ types, save }) {
         {dirty && <button className="ad-btn" onClick={async () => {
           // só confere os números ao salvar, para poder apagar e digitar à vontade
           const num = (v) => Number(String(v).replace(",", "."));
-          const sideOf = (t) => t.side || (num(t.w) > num(t.h) ? "top" : "left");
-          const ringsOf = (t) => (t.rings === undefined || t.rings === null ? (sideOf(t) === "top" ? 6 : 15) : Math.round(num(t.rings)));
-          const bad = list.find((t) => !(num(t.w) > 0) || !(num(t.h) > 0) || (t.kind === "book" && t.spiral && !(ringsOf(t) >= 1)));
-          if (bad) return alert(`Confira as medidas e a quantidade de anéis de “${bad.name}”.`);
-          const clean = list.map((t) => (t.kind === "book" ? { ...t, w: num(t.w), h: num(t.h), rings: ringsOf(t), side: sideOf(t) } : { ...t, w: num(t.w), h: num(t.h) }));
+          // números inválidos ou vazios voltam para o padrão, sem travar o salvamento
+          const ok = (v, d) => (num(v) > 0 ? num(v) : d);
+          const clean = list.map((t) => {
+            const w = ok(t.w, t.kind === "mug" ? 21 : 15), h = ok(t.h, t.kind === "mug" ? 9.5 : 21);
+            if (t.kind !== "book") return { ...t, w, h };
+            const side = t.side || (w > h ? "top" : "left");
+            return { ...t, w, h, side, rings: Math.max(1, Math.round(ok(t.rings, side === "top" ? 6 : 15))) };
+          });
           setList(clean); await save(clean); setDirty(false);
         }}>Salvar tipos</button>}
       </div>
