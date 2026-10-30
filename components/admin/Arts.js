@@ -160,9 +160,11 @@ function MockupTypes({ types, save }) {
         {dirty && <button className="ad-btn" onClick={async () => {
           // só confere os números ao salvar, para poder apagar e digitar à vontade
           const num = (v) => Number(String(v).replace(",", "."));
-          const bad = list.find((t) => !(num(t.w) > 0) || !(num(t.h) > 0) || (t.kind === "book" && t.spiral && !(Math.round(num(t.rings)) >= 1)));
+          const sideOf = (t) => t.side || (num(t.w) > num(t.h) ? "top" : "left");
+          const ringsOf = (t) => (t.rings === undefined || t.rings === null ? (sideOf(t) === "top" ? 6 : 15) : Math.round(num(t.rings)));
+          const bad = list.find((t) => !(num(t.w) > 0) || !(num(t.h) > 0) || (t.kind === "book" && t.spiral && !(ringsOf(t) >= 1)));
           if (bad) return alert(`Confira as medidas e a quantidade de anéis de “${bad.name}”.`);
-          const clean = list.map((t) => ({ ...t, w: num(t.w), h: num(t.h), rings: t.rings === undefined ? undefined : Math.round(num(t.rings)) }));
+          const clean = list.map((t) => (t.kind === "book" ? { ...t, w: num(t.w), h: num(t.h), rings: ringsOf(t), side: sideOf(t) } : { ...t, w: num(t.w), h: num(t.h) }));
           setList(clean); await save(clean); setDirty(false);
         }}>Salvar tipos</button>}
       </div>
