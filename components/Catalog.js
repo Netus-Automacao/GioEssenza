@@ -228,7 +228,7 @@ export default function Catalog({ settings: s, categories = [], products = [], p
         </section>
       )}
 
-      <section className="block" ref={top}>
+      <section className="block prods" ref={top}>
         <h2 className="sec-title">Nossos produtos</h2>
         {visible.length > 0 && (
           <input className="search" type="search" placeholder="Buscar produto" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Buscar produto" />

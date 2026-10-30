@@ -628,3 +628,8 @@ button,input,select,textarea{font:inherit;color:inherit}
 .reviews .reviews-title{font-size:1.65rem;line-height:1.25;color:var(--title);max-width:20rem;margin:0 auto 1.6rem}
 .reviews .rt-normal{font-family:var(--f-body),system-ui,sans-serif;font-weight:400}
 .reviews .rt-bold{font-family:var(--f-display),Georgia,serif;font-weight:var(--title-weight,700)}
+/* Espaçamento uniforme da área de produtos (2.5rem entre blocos) */
+.prods{padding-top:2.5rem;padding-bottom:3.5rem}
+.prods .chips{padding:1rem 0 0}
+.prods .cat-sec{margin-top:2.5rem}
+.prods .cat-sec-head{margin-bottom:.9rem}
