@@ -73,6 +73,7 @@ export default function Catalog({ settings: s, categories = [], products = [], p
   const [cat, setCat] = useState(null);   // null = início; "all" = todos; id = uma categoria
   const [q, setQ] = useState("");
   const [open, setOpen] = useState(null);
+  const [today, setToday] = useState(-1);
   const [copied, setCopied] = useState(false);
   const top = useRef();
 
@@ -82,7 +83,11 @@ export default function Catalog({ settings: s, categories = [], products = [], p
     if (c) setCat(c);
   }, []);
   useEffect(() => {
-    const f = () => setOpen(openStatus(s.hours));
+    const f = () => {
+      setOpen(openStatus(s.hours));
+      const wd = new Intl.DateTimeFormat("en-US", { timeZone: "America/Sao_Paulo", weekday: "short" }).format(new Date());
+      setToday(["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].indexOf(wd));
+    };
     f();
     const t = setInterval(f, 60000);
     return () => clearInterval(t);
@@ -259,7 +264,7 @@ export default function Catalog({ settings: s, categories = [], products = [], p
               <h2 className="sec-title">Horário de atendimento</h2>
               <ul className="hours">
                 {s.hours.days.map((d, i) => (
-                  <li key={i}><span>{DAYS[i]}</span><span>{d.open ? `${hourLabel(d.start)} às ${hourLabel(d.end)}` : "Fechado"}</span></li>
+                  <li key={i} className={i === today ? "today" : ""}><span>{DAYS[i]}{i === today && <em className="today-tag">hoje</em>}</span><span>{d.open ? `${hourLabel(d.start)} às ${hourLabel(d.end)}` : "Fechado"}</span></li>
                 ))}
                 {s.hours.holiday.show && (
                   <li><span>Feriados</span><span>{s.hours.holiday.open ? `${hourLabel(s.hours.holiday.start)} às ${hourLabel(s.hours.holiday.end)}` : "Fechado"}</span></li>

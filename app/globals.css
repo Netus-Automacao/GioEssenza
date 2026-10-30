@@ -584,3 +584,6 @@ button,input,select,textarea{font:inherit;color:inherit}
 .pay-alert{display:flex;gap:.45rem;align-items:center;margin:1rem 0 0;padding:.45rem .75rem;border-radius:10px;
   background:#FFF6E0;border:1px solid #EFD9A0;color:#6A5214;font-size:.82rem;line-height:1.35;width:fit-content;max-width:100%}
 .pay-alert span{font-size:.95rem}
+/* v4.22: dia de hoje em destaque */
+.hours li.today{font-weight:700;color:var(--primary);background:color-mix(in srgb,var(--accent) 20%,transparent);border-radius:8px;padding-left:.5rem;padding-right:.5rem}
+.today-tag{font-style:normal;font-size:.7rem;font-weight:700;margin-left:.45rem;padding:.1rem .45rem;border-radius:999px;background:var(--primary);color:var(--on-primary);vertical-align:middle}
