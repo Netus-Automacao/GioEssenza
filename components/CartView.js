@@ -29,7 +29,6 @@ export default function CartView({ settings: s }) {
     if (modes.length && !mode) return setErr("Escolha como prefere receber o pedido.");
     if (pay.methods.length && !method) return setErr("Escolha a forma de pagamento.");
     if (!date) return setErr("Informe a data desejada ou do evento.");
-    if (!theme.trim()) return setErr("Informe o tema para confecção do produto.");
     const L = "━━━━━━━━━━━━━";
     const out = [`Olá, *${s.name}*! 😊`, "Gostaria de fazer um pedido.", "", `👤 *Cliente:* ${name.trim()}`, "", L, "*DADOS DO PEDIDO*", ""];
     items.forEach((x, i) => {
@@ -116,7 +115,7 @@ export default function CartView({ settings: s }) {
               <input className="opt-input" type="date" value={date} onChange={(e) => { setDate(e.target.value); setErr(""); }} />
             </fieldset>
             <fieldset className="pick">
-              <legend>Tema para confecção do produto</legend>
+              <legend>Tema para confecção do produto <em>(opcional)</em></legend>
               <input className="opt-input" value={theme} maxLength={200} placeholder="Ex.: floral, Stitch, tons de rosa…" onChange={(e) => { setTheme(e.target.value); setErr(""); }} />
             </fieldset>
             <fieldset className="pick">
