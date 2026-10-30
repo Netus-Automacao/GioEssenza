@@ -65,7 +65,8 @@ export default function Arts({ settings, saveSettings, setToast }) {
       {missing && <p className="ad-alert"><strong>Falta preparar o banco de dados.</strong> Rode o arquivo <b>supabase/migration_artes.sql</b> no Supabase → SQL Editor e recarregue esta página.</p>}
       <Card title="No catálogo" desc="A aba aparece junto das categorias. Só galerias publicadas ficam visíveis para os clientes.">
         <Toggle label="Mostrar “Artes disponíveis” no catálogo" checked={!!arts.enabled} onChange={(v) => saveSettings({ ...settings, arts: { ...arts, enabled: v } })} />
-        <Field label="Nome da aba"><input defaultValue={arts.title || "Artes disponíveis"} maxLength={40} onBlur={(e) => e.target.value !== arts.title && saveSettings({ ...settings, arts: { ...arts, title: e.target.value || "Artes disponíveis" } })} /></Field>
+        <TabTitle value={arts.title || "Artes disponíveis"} save={(title) => saveSettings({ ...settings, arts: { ...arts, title } })} />
+        <p className={arts.enabled ? "ad-muted" : "ad-alert"} style={{ margin: 0 }}>{arts.enabled ? "✔ A aba aparece no catálogo, ao lado das categorias." : "A aba está escondida no catálogo. Ligue a opção acima para mostrar."}</p>
       </Card>
       <Card title="Galerias" aside={<button className="ad-btn" onClick={create} disabled={missing}>+ Nova galeria</button>}>
         {gals === null ? <p className="ad-muted">Carregando…</p> : gals.length === 0 ? <p className="ad-muted">Nenhuma galeria ainda.</p> : (
@@ -91,6 +92,20 @@ export default function Arts({ settings, saveSettings, setToast }) {
       <MockupBg bg={bg} save={(b) => saveSettings({ ...settings, arts: { ...arts, bg: b } })} />
       <MockupTypes types={types} save={(mockups) => saveSettings({ ...settings, mockups })} />
     </>
+  );
+}
+
+// nome da aba com botão próprio (antes salvava sozinho ao sair do campo e podia desfazer o botão de mostrar)
+function TabTitle({ value, save }) {
+  const [v, setV] = useState(value);
+  useEffect(() => setV(value), [value]);
+  return (
+    <Field label="Nome da aba">
+      <div style={{ display: "flex", gap: ".5rem" }}>
+        <input value={v} maxLength={40} onChange={(e) => setV(e.target.value)} style={{ flex: 1 }} />
+        {v.trim() && v !== value && <button type="button" className="ad-btn sm" onClick={() => save(v.trim())}>Salvar nome</button>}
+      </div>
+    </Field>
   );
 }
 
