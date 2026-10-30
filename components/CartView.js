@@ -90,12 +90,16 @@ export default function CartView({ settings: s }) {
               <fieldset className="pick">
                 <legend>Como prefere receber?</legend>
                 <div className="pills">{modes.map((m) => <button key={m} className={mode === m ? "on" : ""} onClick={() => { setMode(m); setErr(""); }}>{m}</button>)}</div>
-                <p className="hint">{[s.delivery.app && s.delivery.app_text, s.delivery.pickup && s.delivery.pickup_text].filter(Boolean).join(" ")}</p>
+                {mode && (
+                  <div className="mode-info">
+                    {mode === "Retirada" ? s.delivery.pickup_text : s.delivery.app_text}
+                  </div>
+                )}
               </fieldset>
             )}
             {pay.methods.length > 0 && (
               <fieldset className="pick">
-                <legend>Forma de pagamento</legend>
+                <legend>Escolha a forma de pagamento</legend>
                 <div className="pills">{pay.methods.map((m) => {
                   const label = payShort[m] || "Link de pagamento – crédito (possui taxa da operadora)";
                   return <button key={m} className={method === label ? "on" : ""} onClick={() => { setMethod(label); setErr(""); }}>{label}</button>;

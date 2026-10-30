@@ -63,10 +63,11 @@ export default function ProductView({ settings: s, product: p, categoryName, pre
 
     const lines = [];
     if (kit && kits.length > 1) lines.push(`Kit: ${kit.qty} ${kitUnit(p)}`);
-    groups.forEach((g, gi) => lines.push(`${g.name}: ${g.values[sel[gi]].label}`));
+    const nm = (n) => String(n).trim().replace(/:+$/, "");
+    groups.forEach((g, gi) => lines.push(`${nm(g.name)}: ${g.values[sel[gi]].label}`));
     options.forEach((g, gi) => (opt[gi] || []).forEach((ci) => {
       const c = g.choices[ci]; const t = txt[`${gi}-${ci}`];
-      lines.push(`${g.name}: ${c.label}${t ? ` — ${t.trim()}` : ""}${Number(c.extra) ? ` (+${brl(c.extra)})` : ""}`);
+      lines.push(`${nm(g.name)}: ${c.label}${t ? ` — ${t.trim()}` : ""}${Number(c.extra) ? ` (+${brl(c.extra)})` : ""}`);
     }));
     fields.forEach((f, fi) => {
       const n = units(fi);

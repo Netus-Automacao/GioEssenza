@@ -579,3 +579,4 @@ button,input,select,textarea{font:inherit;color:inherit}
 .pay-alert-icon{font-size:1.4rem;line-height:1}
 .pay-alert strong{display:block;font-family:var(--f-display);font-weight:var(--title-weight);margin-bottom:.2rem}
 .pay-alert p{margin:0;line-height:1.5;font-size:.95rem}
+.mode-info{margin-top:.7rem;padding:.8rem 1rem;border-radius:12px;background:color-mix(in srgb,var(--accent) 22%,var(--bg));border-left:3px solid var(--primary);font-size:.93rem;line-height:1.5}
