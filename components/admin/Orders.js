@@ -10,16 +10,13 @@ export const STATUS = {
 const FLOW = ["novo", "aprovado", "producao", "pronto", "entregue"];
 
 const first = (n) => String(n || "").trim().split(/\s+/)[0] || "";
-const MSG = {
-  aprovado: (o) => `Olá, ${first(o.customer)}! 😊\nSeu pedido na *Gio Essenza* foi *aprovado*. Em breve iniciaremos a produção.\n\nQualquer dúvida, estou à disposição.`,
-  producao: (o) => `Olá, ${first(o.customer)}! ✨\nSeu pedido na *Gio Essenza* está *em produção*. Assim que ficar pronto, aviso você por aqui.`,
-  pronto: (o) => `Olá, ${first(o.customer)}! 🎉\nSeu pedido na *Gio Essenza* foi *concluído* e está pronto${o.delivery ? ` para ${o.delivery === "Retirada" ? "retirada" : "envio por aplicativo"}` : ""}.\n\nVamos combinar o dia e o horário?`,
-  entregue: (o) => `Olá, ${first(o.customer)}! 💚\nSeu pedido foi *entregue*. Obrigada pela confiança na *Gio Essenza*!\n\nSe puder, me conta o que achou. 😊`,
-  cancelado: (o) => `Olá, ${first(o.customer)}.\nSeu pedido na *Gio Essenza* foi *cancelado*. Se tiver alguma dúvida, estou à disposição.`,
-};
-const waTo = (o, st) => `https://wa.me/${String(o.phone || "").replace(/\D/g, "")}?text=${encodeURIComponent(MSG[st](o))}`;
+const fill = (tpl, o) => String(tpl || "").replaceAll("{nome}", first(o.customer)).replaceAll("{nome_completo}", o.customer || "");
 
-export default function Orders({ setToast, onCount }) {
+export default function Orders({ setToast, onCount, settings, saveSettings }) {
+  const tpls = settings.order_msgs;
+  const [compose, setCompose] = useState(null); // { o, st, text }
+  const [editTpl, setEditTpl] = useState(false);
+  const [tplDraft, setTplDraft] = useState(tpls);
   const [orders, setOrders] = useState(null);
   const [err, setErr] = useState("");
   const [filter, setFilter] = useState("abertos");
@@ -40,9 +37,16 @@ export default function Orders({ setToast, onCount }) {
     if (msg) setToast(msg);
   }
   // abre o WhatsApp primeiro (no toque do botão, para o navegador não bloquear) e depois salva a etapa
+  // muda a etapa; se o pedido tem WhatsApp, abre a mensagem para você revisar/escrever antes de enviar
   function advance(o, st) {
-    if (o.phone && MSG[st]) window.open(waTo(o, st), "_blank");
-    update(o, { status: st }, o.phone ? `Pedido: ${STATUS[st]}. Envie a mensagem no WhatsApp.` : `Pedido: ${STATUS[st]} (pedido sem WhatsApp do cliente)`);
+    if (o.phone && tpls[st] !== undefined) setCompose({ o, st, text: fill(tpls[st], o) });
+    else update(o, { status: st }, `Pedido: ${STATUS[st]}`);
+  }
+  function sendCompose(withMsg) {
+    const { o, st, text } = compose;
+    if (withMsg) window.open(`https://wa.me/${o.phone.replace(/\D/g, "")}?text=${encodeURIComponent(text)}`, "_blank");
+    update(o, { status: st }, `Pedido: ${STATUS[st]}`);
+    setCompose(null);
   }
   async function del(o) {
     if (!confirm(`Excluir o pedido de ${o.customer}? Essa ação não pode ser desfeita.`)) return;
@@ -73,6 +77,36 @@ export default function Orders({ setToast, onCount }) {
         <h1 className="ad-h1">Pedidos</h1>
         <button className="ad-btn ghost" onClick={load}>Atualizar</button>
       </div>
+      <Card title="Mensagens para o cliente" desc="Textos que aparecem prontos ao mudar a etapa do pedido. Você também pode editar a mensagem na hora, antes de enviar."
+        aside={<button className="ad-btn ghost sm" onClick={() => { setTplDraft(tpls); setEditTpl(!editTpl); }}>{editTpl ? "Fechar" : "Editar mensagens"}</button>}>
+        {editTpl && (
+          <>
+            <p className="ad-note">Use <b>{"{nome}"}</b> para o primeiro nome do cliente ou <b>{"{nome_completo}"}</b>. Use *asteriscos* para negrito no WhatsApp.</p>
+            {Object.entries(STATUS).filter(([k]) => k !== "novo").map(([k, l]) => (
+              <label key={k} className="ad-field"><span>Pedido {l.toLowerCase()}</span>
+                <textarea rows={4} value={tplDraft[k] || ""} onChange={(e) => setTplDraft({ ...tplDraft, [k]: e.target.value })} />
+              </label>
+            ))}
+            <div className="ad-row end">
+              <button className="ad-btn" onClick={async () => { await saveSettings({ ...settings, order_msgs: tplDraft }); setEditTpl(false); }}>Salvar mensagens</button>
+            </div>
+          </>
+        )}
+      </Card>
+      {compose && (
+        <div className="ad-modal crop" role="dialog" aria-label="Mensagem para o cliente">
+          <div className="crop-panel">
+            <h2>Pedido {STATUS[compose.st].toLowerCase()} — mensagem para {first(compose.o.customer)}</h2>
+            <p className="ad-muted">Escreva ou ajuste a mensagem. Ao tocar em enviar, o WhatsApp abre com este texto.</p>
+            <textarea className="ad-input" rows={8} value={compose.text} onChange={(e) => setCompose({ ...compose, text: e.target.value })} />
+            <div className="ad-row end">
+              <button className="ad-btn ghost" onClick={() => setCompose(null)}>Cancelar</button>
+              <button className="ad-btn ghost" onClick={() => sendCompose(false)}>Só mudar a etapa</button>
+              <button className="ad-btn" onClick={() => sendCompose(true)} disabled={!compose.text.trim()}>Enviar no WhatsApp</button>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="ad-filters">
         {[["abertos", "Em aberto"], ...Object.entries(STATUS), ["todos", "Todos"]].map(([k, l]) => (
           <button key={k} className={filter === k ? "on" : ""} onClick={() => setFilter(k)}>

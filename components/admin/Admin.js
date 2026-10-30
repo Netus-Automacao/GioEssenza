@@ -106,7 +106,7 @@ function Dashboard({ initialTab }) {
         {tab === "pagamento" && <TabPagamento {...props} />}
         {tab === "sobre" && <TabSobre {...props} />}
         {tab === "politicas" && <TabPoliticas {...props} />}
-        {tab === "pedidos" && <Orders setToast={setToast} onCount={setNewOrders} />}
+        {tab === "pedidos" && <Orders setToast={setToast} onCount={setNewOrders} settings={saved} saveSettings={save} />}
         {tab === "categorias" && <Categories cats={cats} setCats={setCats} prods={prods} setToast={setToast} setTab={setTab} />}
         {tab === "produtos" && <Products key={newProduct} startNew={newProduct > 0} settings={saved} cats={cats} prods={prods} setProds={setProds} setToast={setToast} setTab={setTab} />}
         {isSettings && (dirty || saving) && (
