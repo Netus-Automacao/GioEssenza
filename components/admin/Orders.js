@@ -39,13 +39,14 @@ export default function Orders({ setToast, onCount, settings, saveSettings }) {
   // abre o WhatsApp primeiro (no toque do botão, para o navegador não bloquear) e depois salva a etapa
   // muda a etapa; se o pedido tem WhatsApp, abre a mensagem para você revisar/escrever antes de enviar
   function advance(o, st) {
-    if (o.phone && tpls[st] !== undefined) setCompose({ o, st, text: fill(tpls[st], o) });
-    else update(o, { status: st }, `Pedido: ${STATUS[st]}`);
+    if (st === "novo") return update(o, { status: st }, `Pedido: ${STATUS[st]}`);
+    setCompose({ o, st, text: fill(tpls[st] || "", o) });
   }
   function sendCompose(withMsg) {
     const { o, st, text } = compose;
-    if (withMsg) window.open(`https://wa.me/${o.phone.replace(/\D/g, "")}?text=${encodeURIComponent(text)}`, "_blank");
-    update(o, { status: st }, `Pedido: ${STATUS[st]}`);
+    if (withMsg === "copy") { navigator.clipboard.writeText(text); setToast("Mensagem copiada"); }
+    else if (withMsg) window.open(`https://wa.me/${o.phone.replace(/\D/g, "")}?text=${encodeURIComponent(text)}`, "_blank");
+    if (st !== o.status) update(o, { status: st }, `Pedido: ${STATUS[st]}`);
     setCompose(null);
   }
   async function del(o) {
@@ -97,12 +98,14 @@ export default function Orders({ setToast, onCount, settings, saveSettings }) {
         <div className="ad-modal crop" role="dialog" aria-label="Mensagem para o cliente">
           <div className="crop-panel">
             <h2>Pedido {STATUS[compose.st].toLowerCase()} — mensagem para {first(compose.o.customer)}</h2>
-            <p className="ad-muted">Escreva ou ajuste a mensagem. Ao tocar em enviar, o WhatsApp abre com este texto.</p>
+            <p className="ad-muted">{compose.o.phone ? "Escreva ou ajuste a mensagem. Ao tocar em enviar, o WhatsApp abre com este texto." : "Este pedido não tem WhatsApp do cliente. Escreva a mensagem e copie para enviar."}</p>
             <textarea className="ad-input" rows={8} value={compose.text} onChange={(e) => setCompose({ ...compose, text: e.target.value })} />
             <div className="ad-row end">
               <button className="ad-btn ghost" onClick={() => setCompose(null)}>Cancelar</button>
-              <button className="ad-btn ghost" onClick={() => sendCompose(false)}>Só mudar a etapa</button>
-              <button className="ad-btn" onClick={() => sendCompose(true)} disabled={!compose.text.trim()}>Enviar no WhatsApp</button>
+              {compose.st !== compose.o.status && <button className="ad-btn ghost" onClick={() => sendCompose(false)}>Só mudar a etapa</button>}
+              {compose.o.phone
+                ? <button className="ad-btn" onClick={() => sendCompose(true)} disabled={!compose.text.trim()}>Enviar no WhatsApp</button>
+                : <button className="ad-btn" onClick={() => sendCompose("copy")} disabled={!compose.text.trim()}>Copiar mensagem</button>}
             </div>
           </div>
         </div>
@@ -154,12 +157,13 @@ export default function Orders({ setToast, onCount, settings, saveSettings }) {
                           Marcar como {STATUS[FLOW[FLOW.indexOf(o.status) + 1]]}
                         </button>
                       )}
-                      <select className="ad-input" style={{ width: "auto" }} value={o.status} onChange={(e) => update(o, { status: e.target.value }, `Pedido: ${STATUS[e.target.value]}`)} aria-label="Situação">
+                      <select className="ad-input" style={{ width: "auto" }} value={o.status} onChange={(e) => advance(o, e.target.value)} aria-label="Situação">
                         {Object.entries(STATUS).map(([k, l]) => <option key={k} value={k}>{l}</option>)}
                       </select>
-                      <button className="ad-btn ghost" onClick={async () => { await navigator.clipboard.writeText(o.message); setToast("Mensagem copiada"); }}>Copiar mensagem</button>
+                      {o.status !== "novo" && <button className="ad-btn ghost" onClick={() => advance(o, o.status)}>Enviar mensagem ({STATUS[o.status].toLowerCase()})</button>}
+                      <button className="ad-btn ghost" onClick={async () => { await navigator.clipboard.writeText(o.message); setToast("Pedido copiado"); }}>Copiar pedido</button>
                       {o.phone && <a className="ad-btn ghost" href={`https://wa.me/${o.phone.replace(/\D/g, "")}`} target="_blank" rel="noreferrer">Conversar no WhatsApp</a>}
-                      {o.status !== "cancelado" && <button className="ad-btn ghost danger" onClick={() => confirm("Cancelar este pedido e avisar o cliente?") && advance(o, "cancelado")}>Cancelar</button>}
+                      {o.status !== "cancelado" && <button className="ad-btn ghost danger" onClick={() => advance(o, "cancelado")}>Cancelar</button>}
                       <button className="ad-btn ghost danger" onClick={() => del(o)}>Excluir</button>
                     </div>
                   </div>
