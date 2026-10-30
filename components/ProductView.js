@@ -213,7 +213,15 @@ export default function ProductView({ settings: s, product: p, categoryName, pre
               <button className="btn grow" onClick={add} disabled={preview}>Adicionar ao carrinho · {brl(price * qty)}</button>
             </div>
           )}
-          {added && <p className="ok">Adicionado ao carrinho. <Link href="/carrinho">Ver carrinho</Link> ou continue escolhendo.</p>}
+          {added && (
+            <div className="added">
+              <p>✓ Produto adicionado ao carrinho.</p>
+              <div className="added-btns">
+                <Link href="/carrinho" className="btn">Carrinho</Link>
+                <Link href={p.category_id ? `/?c=${p.category_id}` : "/"} className="btn ghost">Catálogo</Link>
+              </div>
+            </div>
+          )}
 
           {filled(p.specs?.prazo) && <div className="important prazo"><strong>Prazo de confecção</strong><p>{p.specs.prazo}</p><p className="hint">{PRAZO_NOTE}</p></div>}
           {p.description && <div className="pdesc">{p.description.split("\n").map((l, i) => <p key={i}>{l}</p>)}</div>}
