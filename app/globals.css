@@ -610,7 +610,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 
 /* Avaliações */
 .reviews{padding:2.4rem 1.1rem 2.2rem;text-align:center;background:linear-gradient(180deg,var(--soft) 0%,var(--bg) 70%)}
-.reviews-icon{width:82px;height:72px;margin:0 auto 1.1rem;display:block}
+.reviews-icon{width:124px;height:108px;margin:0 auto 1.1rem;display:block}
 .reviews h2{font-family:var(--f-body);font-weight:400;font-size:1.65rem;line-height:1.25;color:var(--title);max-width:20rem;margin:0 auto 1.6rem!important}
 .reviews h2 b{font-family:var(--f-display);font-weight:700}
 .reviews-track{display:flex;gap:1rem;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;max-width:34rem;margin:0 auto}
