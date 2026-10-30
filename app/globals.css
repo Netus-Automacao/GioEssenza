@@ -625,3 +625,6 @@ button,input,select,textarea{font:inherit;color:inherit}
 .ad-review{border:1px solid #e6e6e6;border-radius:12px;padding:.9rem;margin-bottom:.9rem}
 .cat .reviews h2{font-family:var(--f-body),system-ui,sans-serif!important;font-weight:400!important}
 .cat .reviews h2 b{font-family:var(--f-display),Georgia,serif;font-weight:var(--title-weight,700)!important}
+.reviews .reviews-title{font-size:1.65rem;line-height:1.25;color:var(--title);max-width:20rem;margin:0 auto 1.6rem}
+.reviews .rt-normal{font-family:var(--f-body),system-ui,sans-serif;font-weight:400}
+.reviews .rt-bold{font-family:var(--f-display),Georgia,serif;font-weight:var(--title-weight,700)}
