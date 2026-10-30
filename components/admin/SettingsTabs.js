@@ -151,6 +151,19 @@ export function TabBanner({ s, set, save, prods, cats }) {
             <Field label={`Tamanho da letra do título: ${Number(b.title_size) || 26}px`} hint="A frase fica limitada a 2 linhas. Se cortar, diminua a letra ou encurte o texto.">
               <input type="range" min="16" max="44" step="1" value={Number(b.title_size) || 26} onChange={(e) => setB({ title_size: Number(e.target.value) })} />
             </Field>
+            <div className="ad-grid2">
+              <ColorField label="Cor da frase" value={b.title_color || "#FFFFFF"} onChange={(title_color) => setB({ title_color })} />
+              <div />
+            </div>
+            <Toggle label="Sombra na frase" hint="Ajuda a ler a frase sobre o fundo." checked={!!b.title_shadow} onChange={(v) => setB({ title_shadow: v })} />
+            {b.title_shadow && (
+              <div className="ad-grid2">
+                <ColorField label="Cor da sombra da frase" value={b.shadow_color || "#000000"} onChange={(shadow_color) => setB({ shadow_color })} />
+                <Field label={`Intensidade da sombra: ${Number(b.shadow_strength) || 0}%`}>
+                  <input type="range" min="0" max="100" step="1" value={Number(b.shadow_strength) || 0} onChange={(e) => setB({ shadow_strength: Number(e.target.value) })} />
+                </Field>
+              </div>
+            )}
             <Field label="Subtítulo"><input value={b.subtitle} placeholder="Ex.: Encomendas de Natal abertas" onChange={(e) => setB({ subtitle: e.target.value })} maxLength={120} /></Field>
           </Card>
         )}

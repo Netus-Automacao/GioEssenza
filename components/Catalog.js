@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { brl, waLink, openStatus, hasPromo, productAvailable, DAYS, cssVars, hourLabel, saleBadge, paymentLists } from "@/lib/data";
+import { brl, waLink, openStatus, hasPromo, productAvailable, DAYS, cssVars, hourLabel, saleBadge, paymentLists, hexToRgbArr } from "@/lib/data";
 import { WaIcon, LinkIcon } from "./Icons";
 import CartButton from "./CartButton";
 
@@ -28,7 +28,11 @@ export function Hero({ s }) {
       <div className="hero-band" style={b.enabled ? band : undefined}>
         <div className="hero-logo">{s.logo ? <img src={s.logo} alt={`Logo ${s.name}`} /> : <span>{s.name}</span>}</div>
         {text && (
-          <div className="hero-text">
+          <div className="hero-text" style={(() => {
+            const [r, g, bb] = hexToRgbArr(b.shadow_color || "#000000");
+            const a = (Number(b.shadow_strength) || 0) / 100;
+            return { "--hero-text": b.title_color || "#FFFFFF", "--hero-shadow": b.title_shadow ? `0 2px 6px rgba(${r},${g},${bb},${a}), 0 1px 2px rgba(${r},${g},${bb},${(a * 0.8).toFixed(2)})` : "none" };
+          })()}>
             {b.title && <h2 style={{ fontSize: `${Number(b.title_size) || 26}px` }}>{b.title}</h2>}
             {b.subtitle && <p>{b.subtitle}</p>}
           </div>
