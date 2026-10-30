@@ -572,3 +572,5 @@ button,input,select,textarea{font:inherit;color:inherit}
 .added p{margin:0 0 .6rem;font-weight:600;color:var(--primary)}
 .added-btns{display:grid;grid-template-columns:1fr 1fr;gap:.6rem}
 .added-btns .btn{width:100%}
+.added-btns{display:flex;flex-wrap:wrap;gap:.5rem}
+.added-btns .btn{width:auto;padding:.5rem 1rem;font-size:.85rem}

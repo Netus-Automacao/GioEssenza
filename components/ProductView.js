@@ -217,8 +217,8 @@ export default function ProductView({ settings: s, product: p, categoryName, pre
             <div className="added">
               <p>✓ Produto adicionado ao carrinho.</p>
               <div className="added-btns">
-                <Link href="/carrinho" className="btn">Carrinho</Link>
-                <Link href={p.category_id ? `/?c=${p.category_id}` : "/"} className="btn ghost">Catálogo</Link>
+                <Link href="/carrinho" className="btn">Ir para o carrinho</Link>
+                <Link href={p.category_id ? `/?c=${p.category_id}` : "/"} className="btn ghost">Retornar ao catálogo</Link>
               </div>
             </div>
           )}
