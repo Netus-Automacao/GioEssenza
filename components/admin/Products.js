@@ -1,6 +1,6 @@
 "use client";
 import { useRef, useState } from "react";
-import { supabase, uploadImage } from "@/lib/supabase";
+import { uploadVideo, supabase, uploadImage } from "@/lib/supabase";
 import { brl, hasPromo, saleBadge, DEFAULT_IMPORTANT } from "@/lib/data";
 import ProductView from "@/components/ProductView";
 import Cropper from "./Cropper";
@@ -324,7 +324,6 @@ function Editor({ initial, cats, settings, onClose, onSaved }) {
     const kops = (p.specs.kit?.options || []).filter((o) => parseInt(o.qty) > 0);
     if (p.sale_type === "kit" && !kops.length) return "Informe pelo menos uma opção de quantidade do kit.";
     if (kops.some((o) => o.price !== "" && o.price != null && Number(o.price) < 0)) return "Preços do kit não podem ser negativos.";
-    if (active && p.photos.length < 1) return "Adicione pelo menos 1 foto para publicar. Você pode salvar como inativo sem foto.";
     const variations = p.variations.filter((g) => g.name.trim()).map((g) => ({ ...g, name: g.name.trim(), values: g.values.filter((v) => v.label.trim()) })).filter((g) => g.values.length);
     if (variations.some((g) => g.values.some((v) => v.price !== "" && v.price != null && Number(v.price) < 0))) return "Preços de variações não podem ser negativos.";
     const options = p.options.filter((g) => g.name.trim()).map((g) => ({ ...g, name: g.name.trim(), choices: g.choices.filter((c) => c.label.trim()) })).filter((g) => g.choices.length);
@@ -376,8 +375,11 @@ function Editor({ initial, cats, settings, onClose, onSaved }) {
           <textarea rows={3} value={p.specs.importante} onChange={(e) => set({ specs: { ...p.specs, importante: e.target.value } })} />
         </Field>
       </Card>
-      <Card title="Fotografias" desc="Até 10 fotos de apresentação, no formato retangular. Pelo menos 1 para publicar.">
+      <Card title="Fotografias" desc="Até 10 fotos de apresentação, no formato retangular. Opcional: sem foto, o produto aparece com a inicial do nome.">
         <Photos photos={p.photos} originals={p.specs._originais || {}} onChange={(photos, o) => set({ photos, specs: { ...p.specs, _originais: o } })} />
+      </Card>
+      <Card title="Vídeos" desc="Até 2 vídeos curtos do produto (MP4 ou MOV, até 50 MB cada). Aparecem na galeria, depois das fotos.">
+        <Videos list={p.specs.videos || []} onChange={(videos) => set({ specs: { ...p.specs, videos } })} />
       </Card>
       <Card title="Forma de venda e preço">
         <div className="ad-grid2">
@@ -444,13 +446,44 @@ function Editor({ initial, cats, settings, onClose, onSaved }) {
 }
 
 /* ---------------- Lista ---------------- */
+function Videos({ list, onChange }) {
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+  async function add(e) {
+    const file = e.target.files?.[0]; e.target.value = "";
+    if (!file) return;
+    setBusy(true); setErr("");
+    try { onChange([...list, await uploadVideo(file)]); } catch (x) { setErr(x.message); }
+    setBusy(false);
+  }
+  return (
+    <div>
+      <div style={{ display: "flex", gap: ".8rem", flexWrap: "wrap" }}>
+        {list.map((u, i) => (
+          <div key={u} style={{ width: 160 }}>
+            <video src={u} controls playsInline preload="metadata" style={{ width: "100%", borderRadius: 10, background: "#000", aspectRatio: "3/4", objectFit: "cover" }} />
+            <button type="button" className="ad-btn ghost sm danger" style={{ width: "100%", marginTop: ".3rem" }} onClick={() => confirm("Remover este vídeo?") && onChange(list.filter((x) => x !== u))}>Remover</button>
+          </div>
+        ))}
+        {list.length < 2 && (
+          <label className="ad-btn ghost" style={{ alignSelf: "flex-start", cursor: busy ? "wait" : "pointer" }}>
+            {busy ? "Enviando vídeo…" : "+ Adicionar vídeo"}
+            <input type="file" accept="video/mp4,video/quicktime,video/webm" hidden disabled={busy} onChange={add} />
+          </label>
+        )}
+      </div>
+      {err && <p className="ad-error">{err}</p>}
+    </div>
+  );
+}
+
 export default function Products({ cats, prods, setProds, setToast, settings, startNew }) {
   const [editing, setEditing] = useState(startNew ? { ...EMPTY } : null);
   const [filter, setFilter] = useState("");
+  const [folder, setFolder] = useState(null); // null = lista de categorias; "none" = sem categoria
   const catName = (id) => cats.find((c) => c.id === id)?.name || "Sem categoria";
 
   async function patch(p, fields, msg) {
-    if (fields.active && !(p.photos || []).length) return setToast("Adicione pelo menos 1 foto antes de publicar.");
     const { data, error } = await supabase.from("products").update(fields).eq("id", p.id).select().single();
     if (error) return setToast(error.message);
     setProds(prods.map((x) => (x.id === p.id ? data : x))); setToast(msg);
@@ -474,24 +507,41 @@ export default function Products({ cats, prods, setProds, setToast, settings, st
       onSaved={(d, active) => { setProds(prods.some((x) => x.id === d.id) ? prods.map((x) => (x.id === d.id ? d : x)) : [...prods, d]); setEditing(null); setToast(active ? "Produto publicado" : "Produto salvo como inativo"); }} />;
   }
 
-  const list = prods.filter((p) => !filter || p.name.toLowerCase().includes(filter.toLowerCase()));
+  const abc = (a, b) => a.name.localeCompare(b.name, "pt-BR", { sensitivity: "base", numeric: true });
+  const list = prods.filter((p) => !filter || p.name.toLowerCase().includes(filter.toLowerCase())).sort(abc);
+  const inCat = (p, id) => (id === "none" ? !cats.some((c) => c.id === p.category_id) : p.category_id === id);
+  const folders = [...cats.map((c) => ({ id: c.id, name: c.name })), { id: "none", name: "Sem categoria" }]
+    .map((g) => ({ ...g, all: prods.filter((p) => inCat(p, g.id)) })).filter((g) => g.id !== "none" || g.all.length);
+  const showFolders = !folder && !filter;
   return (
     <>
       <div className="ad-titlebar">
         <h1 className="ad-h1">Produtos</h1>
-        <button className="ad-btn" onClick={() => setEditing({ ...EMPTY })}>+ Novo produto</button>
+        <button className="ad-btn" onClick={() => setEditing({ ...EMPTY, ...(folder && folder !== "none" ? { category_id: folder } : {}) })}>+ Novo produto</button>
       </div>
       {prods.some((p) => !p.active) && (
-        <p className="ad-alert"><strong>{prods.filter((p) => !p.active).length} produto(s) inativo(s) não aparecem para os clientes.</strong> Para publicar: toque em <b>Editar</b>, adicione pelo menos 1 foto e toque em <b>Publicar produto</b>.</p>
+        <p className="ad-alert"><strong>{prods.filter((p) => !p.active).length} produto(s) inativo(s) não aparecem para os clientes.</strong> Para publicar: toque em <b>Editar</b> e depois em <b>Publicar produto</b>.</p>
       )}
       <Card title={`${prods.length} produtos — ${prods.filter((p) => p.active).length} ativos`} aside={<input className="ad-input" placeholder="Buscar" value={filter} onChange={(e) => setFilter(e.target.value)} />}>
-        {list.length === 0 ? <p className="ad-muted">Nenhum produto. Clique em “Novo produto” para cadastrar o primeiro.</p> : (
+        {showFolders ? (
+          <div className="ad-folders">
+            {folders.map((g) => (
+              <button key={g.id} className="ad-folder" onClick={() => setFolder(g.id)}>
+                <span className="ad-folder-ico" aria-hidden="true">📁</span>
+                <strong>{g.name}</strong>
+                <span className="ad-muted">{g.all.length} produto(s){g.all.some((p) => !p.active) && ` · ${g.all.filter((p) => !p.active).length} inativo(s)`}</span>
+              </button>
+            ))}
+          </div>
+        ) : list.length === 0 ? <p className="ad-muted">Nenhum produto encontrado.</p> : (
+          <>
+          {folder && !filter && <button className="ad-btn ghost sm" style={{ marginBottom: ".8rem" }} onClick={() => setFolder(null)}>← Todas as categorias</button>}
           <div>
-            {[...cats.map((c) => ({ id: c.id, name: c.name })), { id: null, name: "Sem categoria" }].map((g) => {
-              const items = list.filter((p) => (g.id ? p.category_id === g.id : !cats.some((c) => c.id === p.category_id)));
+            {folders.filter((g) => filter || g.id === folder).map((g) => {
+              const items = list.filter((p) => inCat(p, g.id));
               if (!items.length) return null;
               return (
-                <section key={g.id || "none"} className="ad-pgroup">
+                <section key={g.id} className="ad-pgroup">
                   <h3>{g.name} <span className="ad-muted">({items.length})</span></h3>
                   <ul className="ad-plist">
                     {items.map((p) => (
@@ -517,6 +567,7 @@ export default function Products({ cats, prods, setProds, setToast, settings, st
               );
             })}
           </div>
+          </>
         )}
       </Card>
     </>

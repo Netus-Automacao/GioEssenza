@@ -82,7 +82,8 @@ export default function ProductView({ settings: s, product: p, categoryName, pre
   }
 
   const Back = preview ? "span" : Link;
-  const n = photos.length;
+  const media = [...photos.map((u) => ({ t: "img", u })), ...(p.specs?.videos || []).map((u) => ({ t: "vid", u }))];
+  const n = media.length;
   const go = (d) => n > 1 && setIdx((idx + d + n) % n);
   return (
     <main className={`cat${preview ? " is-preview" : ""}`} style={cssVars(s.colors, s.fonts, s.shadow)}>
@@ -100,7 +101,8 @@ export default function ProductView({ settings: s, product: p, categoryName, pre
         <div className="gallery">
           <div className="gallery-main" onTouchStart={(e) => setTouch(e.touches[0].clientX)}
             onTouchEnd={(e) => { if (touch !== null) { const dx = e.changedTouches[0].clientX - touch; if (Math.abs(dx) > 40) go(dx < 0 ? 1 : -1); setTouch(null); } }}>
-            {photos[idx] ? <img src={photos[idx]} alt={`${p.name} — foto ${idx + 1}`} /> : <span className="ph big">{p.name?.charAt(0)}</span>}
+            {media[idx]?.t === "vid" ? <video key={media[idx].u} src={media[idx].u} controls playsInline preload="metadata" />
+              : media[idx] ? <img src={media[idx].u} alt={`${p.name} — foto ${idx + 1}`} /> : <span className="ph big">{p.name?.charAt(0)}</span>}
             {n > 1 && (
               <>
                 <button className="gal-nav prev" onClick={() => go(-1)} aria-label="Foto anterior">‹</button>
@@ -110,11 +112,11 @@ export default function ProductView({ settings: s, product: p, categoryName, pre
             )}
           </div>
           {n > 1 && (
-            <div className="thumbs">{photos.map((u, i) => (
-              <button key={u} className={i === idx ? "on" : ""} onClick={() => setIdx(i)} aria-label={`Ver foto ${i + 1}`}><img src={u} alt="" /></button>
+            <div className="thumbs">{media.map((m, i) => (
+              <button key={m.u} className={`${i === idx ? "on" : ""}${m.t === "vid" ? " vthumb" : ""}`} onClick={() => setIdx(i)} aria-label={m.t === "vid" ? "Ver vídeo" : `Ver foto ${i + 1}`}>{m.t === "vid" ? "▶" : <img src={m.u} alt="" />}</button>
             ))}</div>
           )}
-          {n > 1 && <p className="hint center">Toque nas miniaturas ou deslize a foto para ver todas.</p>}
+          {n > 1 && <p className="hint center">Toque nas miniaturas ou deslize para ver fotos e vídeos.</p>}
         </div>
         <div className="prod-info">
           {categoryName && <p className="pcat">{categoryName}</p>}

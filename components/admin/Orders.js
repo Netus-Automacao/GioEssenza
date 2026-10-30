@@ -45,7 +45,7 @@ export default function Orders({ setToast, onCount, settings, saveSettings }) {
   function sendCompose(withMsg) {
     const { o, st, text } = compose;
     if (withMsg === "copy") { navigator.clipboard.writeText(text); setToast("Mensagem copiada"); }
-    else if (withMsg) window.open(`https://wa.me/${o.phone.replace(/\D/g, "")}?text=${encodeURIComponent(text)}`, "_blank");
+    else if (withMsg) window.open(`https://api.whatsapp.com/send?phone=${o.phone.replace(/\D/g, "")}&text=${encodeURIComponent(text)}`, "_blank");
     if (st !== o.status) update(o, { status: st }, `Pedido: ${STATUS[st]}`);
     setCompose(null);
   }
