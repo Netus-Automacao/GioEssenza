@@ -348,6 +348,24 @@ export function TabSobre({ s, set, save, prods, cats }) {
   );
 }
 
+function StyleRow({ r, setR, w, f }) {
+  return (
+    <div className="ad-row" style={{ gap: ".6rem", marginTop: "-.3rem", marginBottom: ".8rem" }}>
+      <label className="ad-field" style={{ flex: 1, margin: 0 }}><span>Espessura</span>
+        <select value={r[w]} onChange={(e) => setR({ [w]: e.target.value })}>
+          {Object.entries(WEIGHT_LABEL).map(([k, l]) => <option key={k} value={k}>{l}</option>)}
+        </select>
+      </label>
+      <label className="ad-field" style={{ flex: 1, margin: 0 }}><span>Fonte</span>
+        <select value={r[f]} onChange={(e) => setR({ [f]: e.target.value })}>
+          <option value="body">Fonte do texto</option>
+          <option value="title">Fonte dos títulos</option>
+        </select>
+      </label>
+    </div>
+  );
+}
+
 export function TabAvaliacoes({ s, set, prods, cats }) {
   const r = s.reviews;
   const setR = (patch) => set({ reviews: { ...r, ...patch } });
@@ -361,7 +379,9 @@ export function TabAvaliacoes({ s, set, prods, cats }) {
         <Card title="Exibição">
           <Toggle label="Mostrar as avaliações no catálogo" checked={r.enabled} onChange={(v) => setR({ enabled: v })} />
           <Field label="Título"><input value={r.title} maxLength={60} onChange={(e) => setR({ title: e.target.value })} /></Field>
-          <Field label="Palavra em destaque (aparece em negrito no fim do título)"><input value={r.highlight} maxLength={30} onChange={(e) => setR({ highlight: e.target.value })} /></Field>
+          <StyleRow r={r} setR={setR} w="titleWeight" f="titleFont" />
+          <Field label="Palavra em destaque (aparece no fim do título)"><input value={r.highlight} maxLength={30} onChange={(e) => setR({ highlight: e.target.value })} /></Field>
+          <StyleRow r={r} setR={setR} w="highlightWeight" f="highlightFont" />
         </Card>
         <Card title="Avaliações dos clientes" desc="Cole aqui os elogios que chegam pelo WhatsApp, Instagram ou Google. Lembre de salvar no fim.">
           {items.length === 0 && <p className="ad-muted">Nenhuma avaliação ainda.</p>}

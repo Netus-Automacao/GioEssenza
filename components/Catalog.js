@@ -288,6 +288,8 @@ export default function Catalog({ settings: s, categories = [], products = [], p
   );
 }
 
+const rtStyle = (font, weight) => ({ fontFamily: font === "title" ? "var(--f-display), Georgia, serif" : "var(--f-body), system-ui, sans-serif", fontWeight: Number(weight) || 400 });
+
 function Reviews({ r, items }) {
   const [cur, setCur] = useState(0);
   const ref = useRef(null);
@@ -302,7 +304,7 @@ function Reviews({ r, items }) {
         <circle cx="44.5" cy="30.5" r="6" fill="#fff" stroke="var(--title)" strokeWidth="1.6" />
         <path d="M41.6 29.4q1-1 2 0M45.4 29.4q1-1 2 0M42 32.4q2.5 2 5 0" fill="none" stroke="var(--title)" strokeWidth="1.3" strokeLinecap="round" />
       </svg>
-      <p className="reviews-title" role="heading" aria-level="2"><span className="rt-normal">{r.title}</span> {r.highlight && <strong className="rt-bold">{r.highlight}</strong>}</p>
+      <p className="reviews-title" role="heading" aria-level="2"><span style={rtStyle(r.titleFont, r.titleWeight)}>{r.title}</span> {r.highlight && <span style={rtStyle(r.highlightFont, r.highlightWeight)}>{r.highlight}</span>}</p>
       <div className="reviews-track" ref={ref} onScroll={onScroll}>
         {items.map((it, i) => (
           <article key={i} className="review-card">
