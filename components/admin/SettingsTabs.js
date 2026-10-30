@@ -349,19 +349,18 @@ export function TabSobre({ s, set, save, prods, cats }) {
 }
 
 function StyleRow({ r, setR, w, f }) {
+  const pill = (on) => ({ padding: ".45rem .9rem", borderRadius: 999, border: "1.5px solid var(--ad-primary, #4E5E2E)", background: on ? "var(--ad-primary, #4E5E2E)" : "#fff", color: on ? "#fff" : "var(--ad-primary, #4E5E2E)", fontSize: ".85rem", cursor: "pointer" });
   return (
-    <div className="ad-row" style={{ gap: ".6rem", marginTop: "-.3rem", marginBottom: ".8rem" }}>
-      <label className="ad-field" style={{ flex: 1, margin: 0 }}><span>Espessura</span>
-        <select value={r[w]} onChange={(e) => setR({ [w]: e.target.value })}>
-          {Object.entries(WEIGHT_LABEL).map(([k, l]) => <option key={k} value={k}>{l}</option>)}
-        </select>
-      </label>
-      <label className="ad-field" style={{ flex: 1, margin: 0 }}><span>Fonte</span>
-        <select value={r[f]} onChange={(e) => setR({ [f]: e.target.value })}>
-          <option value="body">Fonte do texto</option>
-          <option value="title">Fonte dos títulos</option>
-        </select>
-      </label>
+    <div style={{ display: "flex", flexWrap: "wrap", gap: ".5rem", alignItems: "center", margin: ".2rem 0 1rem" }}>
+      <button type="button" style={{ ...pill(Number(r[w]) < 600), fontWeight: 400 }} onClick={() => setR({ [w]: "400" })}>Normal</button>
+      <button type="button" style={{ ...pill(Number(r[w]) >= 600), fontWeight: 700 }} onClick={() => setR({ [w]: "700" })}>Negrito</button>
+      <select value={r[w]} onChange={(e) => setR({ [w]: e.target.value })} aria-label="Espessura" style={{ padding: ".4rem", borderRadius: 8, border: "1px solid #ddd" }}>
+        {Object.entries(WEIGHT_LABEL).map(([k, l]) => <option key={k} value={k}>{l}</option>)}
+      </select>
+      <select value={r[f]} onChange={(e) => setR({ [f]: e.target.value })} aria-label="Fonte" style={{ padding: ".4rem", borderRadius: 8, border: "1px solid #ddd" }}>
+        <option value="body">Fonte do texto</option>
+        <option value="title">Fonte dos títulos</option>
+      </select>
     </div>
   );
 }
