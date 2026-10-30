@@ -137,13 +137,13 @@ function MockupTypes({ types, save }) {
                 <option value="book">Capa (agenda, planner, bloco, caderno…)</option>
               </select>
             </Field>
-            <Field label="Largura (cm)"><input type="number" step="0.1" min="1" value={t.w} onChange={(e) => up(i, { w: Number(e.target.value) || 1 })} /></Field>
-            <Field label="Altura (cm)"><input type="number" step="0.1" min="1" value={t.h} onChange={(e) => up(i, { h: Number(e.target.value) || 1 })} /></Field>
+            <Field label="Largura (cm)"><input type="number" inputMode="decimal" step="0.1" min="0" value={t.w} onChange={(e) => up(i, { w: e.target.value })} /></Field>
+            <Field label="Altura (cm)"><input type="number" inputMode="decimal" step="0.1" min="0" value={t.h} onChange={(e) => up(i, { h: e.target.value })} /></Field>
           </div>
           {t.kind === "book" && <Toggle label="Mostrar wire-o (espiral)" checked={!!t.spiral} onChange={(v) => up(i, { spiral: v })} />}
           {t.kind === "book" && t.spiral && (
             <div className="ad-grid2">
-              <Field label="Quantidade de anéis"><input type="number" min="1" max="60" value={t.rings || (t.side === "top" ? 6 : 15)} onChange={(e) => up(i, { rings: Number(e.target.value) || 1 })} /></Field>
+              <Field label="Quantidade de anéis"><input type="number" min="1" max="60" value={t.rings ?? (t.side === "top" ? 6 : 15)} onChange={(e) => up(i, { rings: e.target.value })} /></Field>
               <Field label="Posição do wire-o">
                 <select value={t.side || (t.w > t.h ? "top" : "left")} onChange={(e) => up(i, { side: e.target.value })}>
                   <option value="left">Na lateral (como agenda)</option>
@@ -157,7 +157,14 @@ function MockupTypes({ types, save }) {
       ))}
       <div className="ad-row">
         <button className="ad-btn ghost" onClick={() => { setList([...list, { id: `t${Date.now()}`, name: "Novo produto", kind: "book", w: 15, h: 21, spiral: true, rings: 15, side: "left" }]); setDirty(true); }}>+ Novo tipo de produto</button>
-        {dirty && <button className="ad-btn" onClick={async () => { await save(list); setDirty(false); }}>Salvar tipos</button>}
+        {dirty && <button className="ad-btn" onClick={async () => {
+          // só confere os números ao salvar, para poder apagar e digitar à vontade
+          const num = (v) => Number(String(v).replace(",", "."));
+          const bad = list.find((t) => !(num(t.w) > 0) || !(num(t.h) > 0) || (t.kind === "book" && t.spiral && !(Math.round(num(t.rings)) >= 1)));
+          if (bad) return alert(`Confira as medidas e a quantidade de anéis de “${bad.name}”.`);
+          const clean = list.map((t) => ({ ...t, w: num(t.w), h: num(t.h), rings: t.rings === undefined ? undefined : Math.round(num(t.rings)) }));
+          setList(clean); await save(clean); setDirty(false);
+        }}>Salvar tipos</button>}
       </div>
     </Card>
   );
