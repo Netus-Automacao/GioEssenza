@@ -623,3 +623,5 @@ button,input,select,textarea{font:inherit;color:inherit}
 .reviews-dots button{width:8px;height:8px;border-radius:50%;border:0;padding:0;background:color-mix(in srgb,var(--primary) 30%,transparent);cursor:pointer}
 .reviews-dots button.on{background:var(--primary);width:22px;border-radius:6px}
 .ad-review{border:1px solid #e6e6e6;border-radius:12px;padding:.9rem;margin-bottom:.9rem}
+.cat .reviews h2{font-family:var(--f-body),system-ui,sans-serif!important;font-weight:400!important}
+.cat .reviews h2 b{font-family:var(--f-display),Georgia,serif;font-weight:var(--title-weight,700)!important}
