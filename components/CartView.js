@@ -32,9 +32,12 @@ export default function CartView({ settings: s }) {
     const L = "━━━━━━━━━━━━━";
     const out = [`Olá, *${s.name}*! 😊`, "Gostaria de fazer um pedido.", "", `👤 *Cliente:* ${name.trim()}`, "", L, "*DADOS DO PEDIDO*", ""];
     items.forEach((x, i) => {
-      out.push(`• *Item ${i + 1}: ${x.name}*`, `• Quantidade: ${saleLabel(x, x.qty)}`);
-      x.lines.filter((l) => !/^Kit:/.test(l)).forEach((l) => out.push(`• ${l.replace(/::/g, ":")}`));
-      out.push(x.qty > 1 ? `• Valor: ${brl(x.price)} cada (subtotal ${brl(x.price * x.qty)})` : `• Valor: ${brl(x.price)}`, "");
+      out.push(`• *Item ${i + 1}: ${x.name}*`, `• *Quantidade:* ${saleLabel(x, x.qty)}`);
+      x.lines.filter((l) => !/^Kit:/.test(l)).forEach((l) => {
+        const t = l.replace(/::/g, ":"); const i2 = t.indexOf(":");
+        out.push(i2 > 0 ? `• *${t.slice(0, i2).trim()}:* ${t.slice(i2 + 1).trim()}` : `• ${t}`);
+      });
+      out.push(x.qty > 1 ? `• *Valor:* ${brl(x.price)} cada (subtotal ${brl(x.price * x.qty)})` : `• *Valor:* ${brl(x.price)}`, "");
     });
     out.push(L, `*VALOR TOTAL: ${brl(total)}*`, "");
     if (mode) out.push(`• *Recebimento:* ${mode}`);
