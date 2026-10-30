@@ -110,12 +110,23 @@ function MockupTypes({ types, save }) {
             <Field label="Largura (cm)"><input type="number" step="0.1" min="1" value={t.w} onChange={(e) => up(i, { w: Number(e.target.value) || 1 })} /></Field>
             <Field label="Altura (cm)"><input type="number" step="0.1" min="1" value={t.h} onChange={(e) => up(i, { h: Number(e.target.value) || 1 })} /></Field>
           </div>
-          {t.kind === "book" && <Toggle label="Mostrar espiral" checked={!!t.spiral} onChange={(v) => up(i, { spiral: v })} />}
+          {t.kind === "book" && <Toggle label="Mostrar wire-o (espiral)" checked={!!t.spiral} onChange={(v) => up(i, { spiral: v })} />}
+          {t.kind === "book" && t.spiral && (
+            <div className="ad-grid2">
+              <Field label="Quantidade de anéis"><input type="number" min="1" max="60" value={t.rings || (t.side === "top" ? 6 : 15)} onChange={(e) => up(i, { rings: Number(e.target.value) || 1 })} /></Field>
+              <Field label="Posição do wire-o">
+                <select value={t.side || (t.w > t.h ? "top" : "left")} onChange={(e) => up(i, { side: e.target.value })}>
+                  <option value="left">Na lateral (como agenda)</option>
+                  <option value="top">No topo (como bloquinho)</option>
+                </select>
+              </Field>
+            </div>
+          )}
           <button className="ad-btn ghost sm danger" onClick={() => { if (confirm("Remover este tipo de produto?")) { setList(list.filter((_, j) => j !== i)); setDirty(true); } }}>Remover tipo</button>
         </div>
       ))}
       <div className="ad-row">
-        <button className="ad-btn ghost" onClick={() => { setList([...list, { id: `t${Date.now()}`, name: "Novo produto", kind: "book", w: 15, h: 21, spiral: false }]); setDirty(true); }}>+ Novo tipo de produto</button>
+        <button className="ad-btn ghost" onClick={() => { setList([...list, { id: `t${Date.now()}`, name: "Novo produto", kind: "book", w: 15, h: 21, spiral: true, rings: 15, side: "left" }]); setDirty(true); }}>+ Novo tipo de produto</button>
         {dirty && <button className="ad-btn" onClick={async () => { await save(list); setDirty(false); }}>Salvar tipos</button>}
       </div>
     </Card>
