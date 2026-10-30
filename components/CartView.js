@@ -15,6 +15,7 @@ export default function CartView({ settings: s }) {
   const [method, setMethod] = useState("");
   const [cond, setCond] = useState("");
   const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
   const [date, setDate] = useState("");
   const [theme, setTheme] = useState("");
   const [doubts, setDoubts] = useState("");
@@ -27,11 +28,13 @@ export default function CartView({ settings: s }) {
     setErr("");
     const parts = name.trim().split(/\s+/).filter(Boolean);
     if (parts.length < 2) return setErr("Informe seu nome e sobrenome.");
+    const digits = phone.replace(/\D/g, "").replace(/^55(?=\d{10,11}$)/, "");
+    if (digits.length < 10 || digits.length > 11) return setErr("Informe seu WhatsApp com DDD. Ex.: (41) 99999-9999");
     if (modes.length && !mode) return setErr("Escolha como prefere receber o pedido.");
     if (pay.methods.length && !method) return setErr("Escolha a forma de pagamento.");
     if (!date) return setErr("Informe a data desejada ou do evento.");
     const L = "━━━━━━━━━━━━━";
-    const out = [`Olá, *${s.name}*! 😊`, "Gostaria de fazer um pedido.", "", `👤 *Cliente:* ${name.trim()}`, "", L, "*DADOS DO PEDIDO*", ""];
+    const out = [`Olá, *${s.name}*! 😊`, "Gostaria de fazer um pedido.", "", `👤 *Cliente:* ${name.trim()}`, `📱 *WhatsApp:* ${phone.trim()}`, "", L, "*DADOS DO PEDIDO*", ""];
     items.forEach((x, i) => {
       out.push(`• *Item ${i + 1}: ${x.name}*`, `• *Quantidade:* ${saleLabel(x, x.qty)}`);
       x.lines.filter((l) => !/^Kit:/.test(l)).forEach((l) => {
@@ -52,11 +55,14 @@ export default function CartView({ settings: s }) {
     window.open(waLink(s.whatsapp, message), "_blank");
     // registra o pedido no painel e esvazia o carrinho
     const order = {
-      customer: name.trim(), total, delivery: mode, payment: method, condition: pay.conditions.join(" ou "),
+      customer: name.trim(), phone: "55" + digits, total, delivery: mode, payment: method, condition: pay.conditions.join(" ou "),
       wanted_date: date || null, theme: theme.trim(), doubts: doubts.trim(), message,
       items: items.map((x) => ({ id: x.id, name: x.name, qty: x.qty, price: x.price, lines: x.lines, photo: x.photo, label: saleLabel(x, x.qty) })),
     };
-    supabase.from("orders").insert(order).then(() => {}, () => {});
+    supabase.from("orders").insert(order).then(({ error }) => {
+      // se a coluna de WhatsApp ainda não existir no banco, registra sem ela
+      if (error && /phone/i.test(error.message)) { const { phone: _p, ...rest } = order; supabase.from("orders").insert(rest); }
+    }, () => {});
     clearCart();
     setSent(true);
   }
@@ -100,6 +106,11 @@ export default function CartView({ settings: s }) {
             <fieldset className="pick">
               <legend>Nome e sobrenome</legend>
               <input className="opt-input" value={name} maxLength={100} autoComplete="name" placeholder="Seu nome completo" onChange={(e) => { setName(e.target.value); setErr(""); }} />
+            </fieldset>
+            <fieldset className="pick">
+              <legend>Seu WhatsApp</legend>
+              <input className="opt-input" type="tel" inputMode="tel" autoComplete="tel" value={phone} maxLength={20} placeholder="(41) 99999-9999"
+                onChange={(e) => { setPhone(e.target.value); setErr(""); }} />
             </fieldset>
             {modes.length > 0 && (
               <fieldset className="pick">

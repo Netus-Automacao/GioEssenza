@@ -9,6 +9,16 @@ export const STATUS = {
 };
 const FLOW = ["novo", "aprovado", "producao", "pronto", "entregue"];
 
+const first = (n) => String(n || "").trim().split(/\s+/)[0] || "";
+const MSG = {
+  aprovado: (o) => `Olá, ${first(o.customer)}! 😊\nSeu pedido na *Gio Essenza* foi *aprovado*. Em breve iniciaremos a produção.\n\nQualquer dúvida, estou à disposição.`,
+  producao: (o) => `Olá, ${first(o.customer)}! ✨\nSeu pedido na *Gio Essenza* está *em produção*. Assim que ficar pronto, aviso você por aqui.`,
+  pronto: (o) => `Olá, ${first(o.customer)}! 🎉\nSeu pedido na *Gio Essenza* foi *concluído* e está pronto${o.delivery ? ` para ${o.delivery === "Retirada" ? "retirada" : "envio por aplicativo"}` : ""}.\n\nVamos combinar o dia e o horário?`,
+  entregue: (o) => `Olá, ${first(o.customer)}! 💚\nSeu pedido foi *entregue*. Obrigada pela confiança na *Gio Essenza*!\n\nSe puder, me conta o que achou. 😊`,
+  cancelado: (o) => `Olá, ${first(o.customer)}.\nSeu pedido na *Gio Essenza* foi *cancelado*. Se tiver alguma dúvida, estou à disposição.`,
+};
+const waTo = (o, st) => `https://wa.me/${String(o.phone || "").replace(/\D/g, "")}?text=${encodeURIComponent(MSG[st](o))}`;
+
 export default function Orders({ setToast, onCount }) {
   const [orders, setOrders] = useState(null);
   const [err, setErr] = useState("");
@@ -28,6 +38,11 @@ export default function Orders({ setToast, onCount }) {
     const next = orders.map((x) => (x.id === o.id ? data : x));
     setOrders(next); onCount?.(next.filter((x) => x.status === "novo").length);
     if (msg) setToast(msg);
+  }
+  // abre o WhatsApp primeiro (no toque do botão, para o navegador não bloquear) e depois salva a etapa
+  function advance(o, st) {
+    if (o.phone && MSG[st]) window.open(waTo(o, st), "_blank");
+    update(o, { status: st }, o.phone ? `Pedido: ${STATUS[st]}. Envie a mensagem no WhatsApp.` : `Pedido: ${STATUS[st]} (pedido sem WhatsApp do cliente)`);
   }
   async function del(o) {
     if (!confirm(`Excluir o pedido de ${o.customer}? Essa ação não pode ser desfeita.`)) return;
@@ -65,7 +80,7 @@ export default function Orders({ setToast, onCount }) {
           </button>
         ))}
       </div>
-      <Card title={`${list.length} pedido(s)`} desc="Os pedidos entram aqui automaticamente quando o cliente toca em “Enviar pedido pelo WhatsApp”.">
+      <Card title={`${list.length} pedido(s)`} desc="Os pedidos entram aqui automaticamente. Ao aprovar ou mudar de etapa, o WhatsApp abre com a mensagem pronta para o cliente — é só tocar em enviar.">
         {list.length === 0 ? <p className="ad-muted">Nenhum pedido nesta lista.</p> : (
           <ul className="ad-orders">
             {list.map((o) => (
@@ -87,6 +102,7 @@ export default function Orders({ setToast, onCount }) {
                       </div>
                     ))}
                     <dl className="ad-order-info">
+                      <div><dt>WhatsApp</dt><dd>{o.phone ? `+${o.phone}` : "—"}</dd></div>
                       <div><dt>Recebimento</dt><dd>{o.delivery || "—"}</dd></div>
                       <div><dt>Pagamento</dt><dd>{o.payment || "—"}</dd></div>
                       <div><dt>Condição</dt><dd>{o.condition || "—"}</dd></div>
@@ -98,9 +114,9 @@ export default function Orders({ setToast, onCount }) {
                       <textarea rows={2} defaultValue={o.notes} onBlur={(e) => e.target.value !== o.notes && update(o, { notes: e.target.value }, "Anotação salva")} />
                     </label>
                     <div className="ad-row">
-                      {o.status === "novo" && <button className="ad-btn" onClick={() => update(o, { status: "aprovado" }, "Pedido aprovado")}>Aprovar pedido</button>}
+                      {o.status === "novo" && <button className="ad-btn" onClick={() => advance(o, "aprovado")}>Aprovar pedido</button>}
                       {FLOW.includes(o.status) && o.status !== "novo" && o.status !== "entregue" && (
-                        <button className="ad-btn" onClick={() => { const n = FLOW[FLOW.indexOf(o.status) + 1]; update(o, { status: n }, `Pedido: ${STATUS[n]}`); }}>
+                        <button className="ad-btn" onClick={() => advance(o, FLOW[FLOW.indexOf(o.status) + 1])}>
                           Marcar como {STATUS[FLOW[FLOW.indexOf(o.status) + 1]]}
                         </button>
                       )}
@@ -108,7 +124,8 @@ export default function Orders({ setToast, onCount }) {
                         {Object.entries(STATUS).map(([k, l]) => <option key={k} value={k}>{l}</option>)}
                       </select>
                       <button className="ad-btn ghost" onClick={async () => { await navigator.clipboard.writeText(o.message); setToast("Mensagem copiada"); }}>Copiar mensagem</button>
-                      {o.status !== "cancelado" && <button className="ad-btn ghost danger" onClick={() => update(o, { status: "cancelado" }, "Pedido cancelado")}>Cancelar</button>}
+                      {o.phone && <a className="ad-btn ghost" href={`https://wa.me/${o.phone.replace(/\D/g, "")}`} target="_blank" rel="noreferrer">Conversar no WhatsApp</a>}
+                      {o.status !== "cancelado" && <button className="ad-btn ghost danger" onClick={() => confirm("Cancelar este pedido e avisar o cliente?") && advance(o, "cancelado")}>Cancelar</button>}
                       <button className="ad-btn ghost danger" onClick={() => del(o)}>Excluir</button>
                     </div>
                   </div>

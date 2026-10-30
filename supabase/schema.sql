@@ -96,3 +96,5 @@ drop policy if exists "orders admin" on public.orders;
 create policy "orders insert public" on public.orders for insert to anon, authenticated
   with check (status = 'novo' and notes = '');
 create policy "orders admin" on public.orders for all to authenticated using (true) with check (true);
+
+alter table public.orders add column if not exists phone text not null default '';
