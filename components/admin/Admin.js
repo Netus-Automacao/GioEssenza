@@ -7,10 +7,11 @@ import Products from "./Products";
 
 import Categories from "./Categories";
 import Orders from "./Orders";
+import Arts from "./Arts";
 
 const TABS = [
   ["dashboard", "Geral"], ["loja", "Identidade da loja"], ["banner", "Banner de destaque"], ["cores", "Cores e fontes"],
-  ["horarios", "Horário de funcionamento"], ["entrega", "Entrega e retirada"], ["pagamento", "Pagamento"], ["sobre", "Sobre nós"], ["avaliacoes", "Avaliações"], ["politicas", "Políticas"], ["categorias", "Categorias"], ["produtos", "Produtos"], ["pedidos", "Pedidos"],
+  ["horarios", "Horário de funcionamento"], ["entrega", "Entrega e retirada"], ["pagamento", "Pagamento"], ["sobre", "Sobre nós"], ["avaliacoes", "Avaliações"], ["politicas", "Políticas"], ["categorias", "Categorias"], ["produtos", "Produtos"], ["artes", "Artes disponíveis"], ["pedidos", "Pedidos"],
 ];
 const go = (t) => window.history.pushState(null, "", `/admin/${t}`);
 
@@ -109,6 +110,7 @@ function Dashboard({ initialTab }) {
         {tab === "politicas" && <TabPoliticas {...props} />}
         {tab === "pedidos" && <Orders setToast={setToast} onCount={setNewOrders} settings={saved} saveSettings={save} />}
         {tab === "categorias" && <Categories cats={cats} setCats={setCats} prods={prods} setToast={setToast} setTab={setTab} />}
+        {tab === "artes" && <Arts settings={saved} saveSettings={save} setToast={setToast} />}
         {tab === "produtos" && <Products key={newProduct} startNew={newProduct > 0} settings={saved} cats={cats} prods={prods} setProds={setProds} setToast={setToast} setTab={setTab} />}
         {isSettings && (dirty || saving) && (
           <div className="ad-savebar">

@@ -137,11 +137,13 @@ export default function Catalog({ settings: s, categories = [], products = [], p
     s.delivery.pickup && { t: "Retiradas", d: s.delivery.pickup_text },
   ].filter(Boolean);
 
-  const chips = cats.length > 1 && (
+  const artsOn = !!s.arts?.enabled;
+  const chips = (cats.length > 1 || artsOn) && (
     <nav className="chips" aria-label="Categorias">
       <button className={!cat ? "on" : ""} onClick={() => choose(null)}>Início</button>
       {cats.map((c) => <button key={c.id} className={cat === c.id ? "on" : ""} onClick={() => choose(c.id)}>{c.name}</button>)}
       <button className={cat === "all" ? "on" : ""} onClick={() => choose("all")}>Todos</button>
+      {artsOn && <button onClick={() => { if (!preview) window.location.href = "/artes"; }}>{s.arts.title || "Artes disponíveis"}</button>}
     </nav>
   );
 
