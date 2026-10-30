@@ -574,3 +574,8 @@ button,input,select,textarea{font:inherit;color:inherit}
 .added-btns .btn{width:100%}
 .added-btns{display:flex;flex-wrap:wrap;gap:.5rem}
 .added-btns .btn{width:auto;padding:.5rem 1rem;font-size:.85rem}
+.pay-alert{display:flex;gap:.8rem;align-items:flex-start;margin-top:2rem;padding:1rem 1.1rem;border-radius:14px;
+  background:#FFF6E0;border:1px solid #EBCB7E;color:#5A4410}
+.pay-alert-icon{font-size:1.4rem;line-height:1}
+.pay-alert strong{display:block;font-family:var(--f-display);font-weight:var(--title-weight);margin-bottom:.2rem}
+.pay-alert p{margin:0;line-height:1.5;font-size:.95rem}

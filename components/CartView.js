@@ -28,7 +28,8 @@ export default function CartView({ settings: s }) {
     if (parts.length < 2) return setErr("Informe seu nome e sobrenome.");
     if (modes.length && !mode) return setErr("Escolha como prefere receber o pedido.");
     if (pay.methods.length && !method) return setErr("Escolha a forma de pagamento.");
-    if (pay.conditions.length && !cond) return setErr("Escolha a condição de pagamento.");
+    if (!date) return setErr("Informe a data desejada ou do evento.");
+    if (!theme.trim()) return setErr("Informe o tema para confecção do produto.");
     const L = "━━━━━━━━━━━━";
     const out = [`Olá, *${s.name}*! 😊`, "Gostaria de fazer um pedido pelo catálogo.", ""];
     if (name.trim()) out.push(`👤 *Cliente:* ${name.trim()}`, "");
@@ -42,7 +43,7 @@ export default function CartView({ settings: s }) {
     out.push(L, `💰 *Total dos produtos: ${brl(total)}*`, "");
     if (mode) out.push(`🚚 *Recebimento:* ${mode}`);
     if (method) out.push(`💳 *Pagamento:* ${method}`);
-    if (cond) out.push(`📌 *Condição:* ${cond}`);
+    if (pay.conditions.length) out.push(`📌 *Condição:* ${pay.conditions.join(" ou ")}`);
     if (date) out.push(`📅 *Data desejada / do evento:* ${date.split("-").reverse().join("/")}`);
     if (theme.trim()) out.push(`🎨 *Tema para confecção:* ${theme.trim()}`);
     if (doubts.trim()) out.push(`❓ *Dúvidas:* ${doubts.trim()}`);
@@ -102,24 +103,29 @@ export default function CartView({ settings: s }) {
               </fieldset>
             )}
             {pay.conditions.length > 0 && (
-              <fieldset className="pick">
-                <legend>Condição de pagamento</legend>
-                <div className="pills">{pay.conditions.map((m) => <button key={m} className={cond === m ? "on" : ""} onClick={() => { setCond(m); setErr(""); }}>{m}</button>)}</div>
-              </fieldset>
+              <div className="pay-alert" role="note">
+                <span className="pay-alert-icon" aria-hidden="true">⚠️</span>
+                <div>
+                  <strong>Condição de pagamento</strong>
+                  {pay.conditions.length === 1 && s.payments.full
+                    ? <p>Para que o pedido seja confirmado, é necessário o pagamento integral do valor.</p>
+                    : <p>{pay.conditions.join(" ou ")}.</p>}
+                </div>
+              </div>
             )}
             <fieldset className="pick">
               <legend>Data desejada ou do evento</legend>
-              <input className="opt-input" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+              <input className="opt-input" type="date" value={date} onChange={(e) => { setDate(e.target.value); setErr(""); }} />
             </fieldset>
             <fieldset className="pick">
               <legend>Tema para confecção do produto</legend>
-              <input className="opt-input" value={theme} maxLength={200} placeholder="Ex.: floral, Stitch, tons de rosa…" onChange={(e) => setTheme(e.target.value)} />
+              <input className="opt-input" value={theme} maxLength={200} placeholder="Ex.: floral, Stitch, tons de rosa…" onChange={(e) => { setTheme(e.target.value); setErr(""); }} />
             </fieldset>
             <fieldset className="pick">
-              <legend>Dúvidas</legend>
+              <legend>Dúvidas <em>(opcional)</em></legend>
               <textarea className="opt-input" rows={3} maxLength={400} value={doubts} placeholder="Escreva aqui se tiver alguma dúvida" onChange={(e) => setDoubts(e.target.value)} />
             </fieldset>
-            <p className="hint">Data, tema e dúvidas não são obrigatórios.</p>
+            <p className="hint">Apenas o campo de dúvidas é opcional.</p>
             <div className="cart-total"><span>Total dos produtos</span><strong>{brl(total)}</strong></div>
             <p className="hint">Valores sem entrega. O pedido é confirmado no atendimento pelo WhatsApp.</p>
             {err && <p className="err" role="alert">{err}</p>}
