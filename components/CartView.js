@@ -126,7 +126,7 @@ export default function CartView({ settings: s }) {
               <textarea className="opt-input" rows={3} maxLength={400} value={doubts} placeholder="Escreva aqui se tiver alguma dúvida" onChange={(e) => setDoubts(e.target.value)} />
             </fieldset>
             <div className="cart-total"><span>Total dos produtos</span><strong>{brl(total)}</strong></div>
-            <p className="hint">Valores sem entrega. O pedido é confirmado no atendimento pelo WhatsApp.</p>
+            <p className="hint">O pedido é confirmado no atendimento pelo WhatsApp.</p>
             {err && <p className="err" role="alert">{err}</p>}
             {wa && <button className="btn block" onClick={send}><WaIcon /> Enviar pedido pelo WhatsApp</button>}
             <Link href="/" className="btn ghost block">Continuar comprando</Link>
