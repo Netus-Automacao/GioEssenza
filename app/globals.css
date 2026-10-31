@@ -688,3 +688,6 @@ button,input,select,textarea{font:inherit;color:inherit}
 .art-save{display:block;width:calc(100% - 1rem);margin:0 .5rem .6rem;border:0;border-radius:999px;padding:.5rem .6rem;background:var(--primary);color:var(--on-primary);font:inherit;font-size:.82rem;font-weight:600;cursor:pointer}
 .art-save:disabled{opacity:.6}
 .art-save.big{width:auto;margin-top:.8rem;padding:.65rem 1.4rem;font-size:.95rem}
+
+/* proteção das fotos: sem menu de salvar no toque longo, sem arrastar, sem seleção */
+.cat img{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;-webkit-user-drag:none}

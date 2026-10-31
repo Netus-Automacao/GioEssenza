@@ -1,3 +1,4 @@
+import ProtectImages from "@/components/ProtectImages";
 import "./globals.css";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -23,7 +24,7 @@ export default async function RootLayout({ children }) {
         <link rel="stylesheet" href={fontsHref([f.title, f.body, "Figtree", "Marcellus"])} />
         {fontFaceCss(f) && <style dangerouslySetInnerHTML={{ __html: fontFaceCss(f) }} />}
       </head>
-      <body>{children}</body>
+      <body><ProtectImages />{children}</body>
     </html>
   );
 }
