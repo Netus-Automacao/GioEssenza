@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
 // grade com carregamento progressivo: busca mais modelos quando o fim da lista aparece na tela
-// baixa o modelo como JPG (abre "Salvar imagem" no celular quando possível)
+// baixa o modelo como JPG direto no aparelho
 async function saveImage(url, n, setMsg) {
   try {
     setMsg(n);
@@ -13,12 +13,9 @@ async function saveImage(url, n, setMsg) {
     const blob = await new Promise((ok) => c.toBlob(ok, "image/jpeg", 0.92));
     const name = `modelo-${String(n).padStart(2, "0")}.jpg`;
     const file = new File([blob], name, { type: "image/jpeg" });
-    if (navigator.canShare?.({ files: [file] }) && /Android|iPhone|iPad/i.test(navigator.userAgent)) {
-      await navigator.share({ files: [file], title: `Modelo ${String(n).padStart(2, "0")}` }).catch(() => {});
-    } else {
-      const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name;
-      document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
-    }
+    // download direto em todos os aparelhos (sem abrir a tela de compartilhar)
+    const a = document.createElement("a"); a.href = URL.createObjectURL(file); a.download = name;
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
   } catch { window.open(url, "_blank"); }
   setMsg(null);
 }
