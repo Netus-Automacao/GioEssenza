@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { supabase, uploadArtFile, removeStored } from "@/lib/supabase";
-import { DEFAULT_MOCKUPS, DEFAULT_ADJUST, loadImage, renderMockup, toBlob, thumbOf } from "@/lib/mockup";
+import { DEFAULT_MOCKUPS, DEFAULT_ADJUST, loadImage, renderMockup, toBlob, thumbOf, makeMugPrint, drawSpinFrame } from "@/lib/mockup";
 import { Toggle, Field, Card } from "./ui";
 
 const typeOf = (settings, id) => (settings.mockups || DEFAULT_MOCKUPS).find((t) => t.id === id) || null;
@@ -198,6 +198,7 @@ function GalleryEditor({ g, types, bg, setToast, onBack, onSaved }) {
   const [busy, setBusy] = useState("");
   const [adjusting, setAdjusting] = useState(null);
   const [preview, setPreview] = useState(false);
+  const [spin, setSpin] = useState(null);
   const replaceFor = useRef(null);
   const replaceInput = useRef(null);
   const type = types.find((t) => t.id === form.mockup) || null;
@@ -304,6 +305,7 @@ function GalleryEditor({ g, types, bg, setToast, onBack, onSaved }) {
                   <span className="ad-muted">Modelo {String(i + 1).padStart(2, "0")}</span>
                   <div className="ad-art-actions">
                     <button className="ad-btn ghost sm" onClick={() => setAdjusting(it)} disabled={!!busy}>Ajustar</button>
+                    {type?.kind === "mug" && <button className="ad-btn ghost sm" onClick={() => setSpin({ it, n: i + 1 })} disabled={!!busy}>🎬 Animação</button>}
                     <button className="ad-btn ghost sm" disabled={!!busy} onClick={() => { replaceFor.current = it; replaceInput.current.click(); }}>Substituir</button>
                     <button className="ad-btn ghost sm" disabled={i === 0} onClick={() => move(i, -1)}>←</button>
                     <button className="ad-btn ghost sm" disabled={i === items.length - 1} onClick={() => move(i, 1)}>→</button>
@@ -322,6 +324,7 @@ function GalleryEditor({ g, types, bg, setToast, onBack, onSaved }) {
       </Card>
       {adjusting && <Adjuster item={adjusting} type={type} bg={bg} onClose={() => setAdjusting(null)}
         onSave={async (adj) => { setBusy("Gerando mockup…"); try { await regen(adjusting, adj); setToast("Mockup atualizado"); setAdjusting(null); } catch (err) { setToast(err.message); } setBusy(""); }} />}
+      {spin && <SpinVideo item={spin.it} n={spin.n} type={type} bg={bg} onClose={() => setSpin(null)} />}
       {preview && (
         <div className="ad-modal crop" role="dialog" aria-label="Pré-visualização">
           <div className="crop-panel" style={{ maxWidth: 900, width: "100%" }}>
@@ -371,6 +374,79 @@ function Adjuster({ item, type, bg, onClose, onSave }) {
           <button className="ad-btn ghost" onClick={() => setA({ ...DEFAULT_ADJUST })}>Restaurar</button>
           <button className="ad-btn ghost" onClick={onClose}>Cancelar</button>
           <button className="ad-btn" onClick={() => onSave(a)} disabled={!img}>Salvar e gerar mockup</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// vídeo curto da caneca girando 360°, gerado no próprio aparelho (para enviar ao cliente pelo WhatsApp)
+function SpinVideo({ item, n, type, bg, onClose }) {
+  const [state, setState] = useState("pronto"); // pronto | gravando | feito | erro
+  const [pct, setPct] = useState(0);
+  const [video, setVideo] = useState(null);
+  const [secs, setSecs] = useState(6);
+  const view = useRef(null);
+  const name = `caneca-modelo-${String(n).padStart(2, "0")}`;
+
+  async function record() {
+    try {
+      setState("gravando"); setPct(0); setVideo(null);
+      const img = await loadImage(item.original);
+      const print = makeMugPrint(img, type, item.adjust);
+      const SIZE = 720, c = document.createElement("canvas"); c.width = SIZE; c.height = SIZE;
+      const ctx = c.getContext("2d");
+      view.current.replaceChildren(c); c.style.width = "100%"; c.style.borderRadius = "12px";
+      const mime = ["video/mp4;codecs=avc1", "video/mp4", "video/webm;codecs=vp9", "video/webm"].find((m) => window.MediaRecorder?.isTypeSupported?.(m));
+      if (!mime) throw new Error("Este navegador não grava vídeo. Use o Chrome atualizado.");
+      drawSpinFrame(ctx, print, 0, bg, SIZE);
+      const rec = new MediaRecorder(c.captureStream(30), { mimeType: mime, videoBitsPerSecond: 4_000_000 });
+      const parts = []; rec.ondataavailable = (e) => e.data.size && parts.push(e.data);
+      const done = new Promise((ok) => { rec.onstop = ok; });
+      rec.start();
+      const total = secs * 1000, t0 = performance.now();
+      await new Promise((ok) => {
+        const tick = (now) => {
+          const p = Math.min(1, (now - t0) / total);
+          const ease = p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2; // começa e termina suave
+          drawSpinFrame(ctx, print, -Math.PI / 2 + ease * Math.PI * 2, bg, SIZE);
+          setPct(Math.round(p * 100));
+          if (p < 1) requestAnimationFrame(tick); else setTimeout(ok, 300);
+        };
+        requestAnimationFrame(tick);
+      });
+      rec.stop(); await done;
+      const ext = mime.includes("mp4") ? "mp4" : "webm";
+      const blob = new Blob(parts, { type: mime.split(";")[0] });
+      setVideo({ url: URL.createObjectURL(blob), file: new File([blob], `${name}.${ext}`, { type: blob.type }), ext });
+      setState("feito");
+    } catch (e) { setState("erro: " + (e.message || e)); }
+  }
+  const download = () => { const a = document.createElement("a"); a.href = video.url; a.download = video.file.name; document.body.appendChild(a); a.click(); a.remove(); };
+  const share = () => navigator.share({ files: [video.file], title: `Modelo ${String(n).padStart(2, "0")}` }).catch(() => {});
+
+  return (
+    <div className="ad-modal crop" role="dialog" aria-label="Animação da caneca">
+      <div className="crop-panel" style={{ maxWidth: 480, width: "100%" }}>
+        <h2>🎬 Caneca girando — Modelo {String(n).padStart(2, "0")}</h2>
+        <div ref={view} style={{ display: state === "feito" ? "none" : "block", minHeight: 40 }} />
+        {video && <video src={video.url} controls autoPlay loop playsInline muted style={{ width: "100%", borderRadius: 12 }} />}
+        {state === "pronto" && (
+          <>
+            <p className="ad-muted">Cria um vídeo curto da caneca dando uma volta completa, para enviar ao cliente aprovar a arte. Mantenha esta tela aberta enquanto grava.</p>
+            <label className="ad-field"><span>Duração: {secs} segundos</span>
+              <input type="range" min="4" max="10" step="1" value={secs} onChange={(e) => setSecs(Number(e.target.value))} />
+            </label>
+          </>
+        )}
+        {state === "gravando" && <p className="ad-note">Gravando… {pct}% — não saia desta tela.</p>}
+        {state.startsWith("erro") && <p className="ad-error">{state.slice(6)}</p>}
+        {state === "feito" && video?.ext === "webm" && <p className="ad-muted">Este navegador gerou o vídeo em WebM. No Android ele toca no WhatsApp; para iPhone, gere pelo Chrome atualizado ou Safari (MP4).</p>}
+        <div className="ad-row end" style={{ flexWrap: "wrap" }}>
+          <button className="ad-btn ghost" onClick={onClose} disabled={state === "gravando"}>Fechar</button>
+          {state !== "gravando" && <button className="ad-btn ghost" onClick={record}>{state === "feito" ? "Gravar de novo" : "Gerar animação"}</button>}
+          {state === "feito" && navigator.canShare?.({ files: [video.file] }) && <button className="ad-btn" onClick={share}>Enviar (WhatsApp…)</button>}
+          {state === "feito" && <button className="ad-btn" onClick={download}>Baixar vídeo</button>}
         </div>
       </div>
     </div>
