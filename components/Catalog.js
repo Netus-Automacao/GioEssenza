@@ -207,7 +207,7 @@ export default function Catalog({ settings: s, categories = [], products = [], p
               {(others.length > 0 || s.address || policiesBtn) && (
                 <div className="social">
                   {others.map((l, i) => (
-                    <a key={i} className="social-btn" href={l.url} target="_blank" rel="noreferrer"><LinkIcon type={l.type} /> {l.label || l.type}</a>
+                    <a key={i} className="social-btn" href={l.url} target="_blank" rel="noreferrer"><LinkIcon type={l.type === "link" && /avali|review|google/i.test(`${l.label} ${l.url}`) ? "avaliacao" : l.type} /> {l.label || l.type}</a>
                   ))}
                   {s.address && (
                     <a className="social-btn" href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(s.address)}`} target="_blank" rel="noreferrer">

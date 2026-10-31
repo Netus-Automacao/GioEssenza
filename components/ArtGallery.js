@@ -3,10 +3,31 @@ import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
 // grade com carregamento progressivo: busca mais modelos quando o fim da lista aparece na tela
+// baixa o modelo como JPG (abre "Salvar imagem" no celular quando possível)
+async function saveImage(url, n, setMsg) {
+  try {
+    setMsg(n);
+    const img = await new Promise((ok, bad) => { const i = new Image(); i.crossOrigin = "anonymous"; i.onload = () => ok(i); i.onerror = bad; i.src = url; });
+    const c = document.createElement("canvas"); c.width = img.naturalWidth; c.height = img.naturalHeight;
+    const x = c.getContext("2d"); x.fillStyle = "#fff"; x.fillRect(0, 0, c.width, c.height); x.drawImage(img, 0, 0);
+    const blob = await new Promise((ok) => c.toBlob(ok, "image/jpeg", 0.92));
+    const name = `modelo-${String(n).padStart(2, "0")}.jpg`;
+    const file = new File([blob], name, { type: "image/jpeg" });
+    if (navigator.canShare?.({ files: [file] }) && /Android|iPhone|iPad/i.test(navigator.userAgent)) {
+      await navigator.share({ files: [file], title: `Modelo ${String(n).padStart(2, "0")}` }).catch(() => {});
+    } else {
+      const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name;
+      document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    }
+  } catch { window.open(url, "_blank"); }
+  setMsg(null);
+}
+
 export default function ArtGallery({ galleryId, initial, total, pageSize }) {
   const [items, setItems] = useState(initial);
   const [loading, setLoading] = useState(false);
   const [zoom, setZoom] = useState(null);
+  const [saving, setSaving] = useState(null);
   const end = useRef(null);
   const done = items.length >= total;
 
@@ -39,6 +60,9 @@ export default function ArtGallery({ galleryId, initial, total, pageSize }) {
           <figure key={it.id} onClick={() => setZoom(i)}>
             <img src={it.thumb || it.mockup} alt={`Modelo ${i + 1}`} loading="lazy" decoding="async" />
             <figcaption>Modelo {String(i + 1).padStart(2, "0")}</figcaption>
+            <button type="button" className="art-save" disabled={saving === i + 1} onClick={(e) => { e.stopPropagation(); saveImage(it.mockup || it.thumb, i + 1, setSaving); }}>
+              {saving === i + 1 ? "Salvando…" : "⬇ Salvar imagem"}
+            </button>
           </figure>
         ))}
       </div>
@@ -47,6 +71,7 @@ export default function ArtGallery({ galleryId, initial, total, pageSize }) {
         <div className="art-zoom" onClick={() => setZoom(null)} role="dialog" aria-label={`Modelo ${zoom + 1}`}>
           <img src={items[zoom].mockup || items[zoom].thumb} alt={`Modelo ${zoom + 1}`} onClick={(e) => e.stopPropagation()} />
           <p>Modelo {String(zoom + 1).padStart(2, "0")} — toque fora para fechar</p>
+          <button type="button" className="art-save big" onClick={(e) => { e.stopPropagation(); saveImage(items[zoom].mockup || items[zoom].thumb, zoom + 1, setSaving); }}>⬇ Salvar imagem</button>
           {zoom > 0 && <button className="gal-nav prev" onClick={(e) => { e.stopPropagation(); setZoom(zoom - 1); }} aria-label="Anterior">‹</button>}
           {zoom < items.length - 1 && <button className="gal-nav next" onClick={(e) => { e.stopPropagation(); setZoom(zoom + 1); }} aria-label="Próximo">›</button>}
         </div>
