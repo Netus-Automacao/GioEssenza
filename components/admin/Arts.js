@@ -226,7 +226,7 @@ function GalleryEditor({ g, types, bg, setToast, onBack, onSaved }) {
         if (!/^image\/(jpeg|png|webp)$/.test(f.type)) throw new Error(`${f.name}: use JPG, PNG ou WebP.`);
         const original = await uploadArtFile(f, "originais");
         const { mockup, thumb } = await makeAssets(f, type, DEFAULT_ADJUST, bg);
-        const { data, error } = await supabase.from("art_items").insert({ gallery_id: g.id, original, mockup, thumb, adjust: DEFAULT_ADJUST, position: pos++ }).select().single();
+        const { data, error } = await supabase.from("art_items").insert({ gallery_id: g.id, original, mockup, thumb, adjust: DEFAULT_ADJUST, position: pos++, published: false }).select().single();
         if (error) throw error;
         added.push(data); setItems((x) => [...x, data]);
       } catch (err) { setToast(err.message); }
@@ -261,6 +261,12 @@ function GalleryEditor({ g, types, bg, setToast, onBack, onSaved }) {
     const n = [...items]; [n[i], n[j]] = [n[j], n[i]]; setItems(n);
     await Promise.all([supabase.from("art_items").update({ position: i }).eq("id", n[i].id), supabase.from("art_items").update({ position: j }).eq("id", n[j].id)]);
   }
+  async function setPub(it, published) {
+    const { data, error } = await supabase.from("art_items").update({ published }).eq("id", it.id).select().single();
+    if (error) return setToast(/published/.test(error.message) ? "Rode o arquivo migration_artes_aprovacao.sql no Supabase." : error.message);
+    setItems((x) => x.map((i) => (i.id === it.id ? data : i)));
+    setToast(published ? "Arte liberada no catálogo" : "Arte retirada do catálogo");
+  }
   async function del(it) {
     if (!confirm("Excluir esta arte?")) return;
     await supabase.from("art_items").delete().eq("id", it.id);
@@ -292,7 +298,7 @@ function GalleryEditor({ g, types, bg, setToast, onBack, onSaved }) {
           <button className="ad-btn" onClick={() => saveInfo()}>Salvar galeria</button>
         </div>
       </Card>
-      <Card title={`Artes${items ? ` (${items.length})` : ""}`} desc="Envie quantas quiser, várias de uma vez. A arte original é guardada sem nenhuma alteração; o mockup é gerado automaticamente."
+      <Card title={`Artes${items ? ` (${items.length})` : ""}`} desc="Envie quantas quiser. Toda arte nova entra como RASCUNHO: só você vê, ajusta e gera a animação. Ela só aparece para os clientes quando você tocar em “Liberar no catálogo”."
         aside={<label className="ad-btn" style={{ cursor: busy ? "wait" : "pointer" }}>{busy || "+ Adicionar artes"}<input type="file" accept="image/jpeg,image/png,image/webp" multiple hidden disabled={!!busy || !items} onChange={addFiles} /></label>}>
         {busy && <p className="ad-note">{busy} Não feche esta página.</p>}
         {items === null ? <p className="ad-muted">Carregando…</p> : items.length === 0 ? <p className="ad-muted">Nenhuma arte ainda.</p> : (
@@ -302,7 +308,10 @@ function GalleryEditor({ g, types, bg, setToast, onBack, onSaved }) {
               {items.map((it, i) => (
                 <div key={it.id} className="ad-art">
                   <img src={it.thumb || it.mockup || it.original} alt="" loading="lazy" />
-                  <span className="ad-muted">Modelo {String(i + 1).padStart(2, "0")}</span>
+                  <span className="ad-muted">Modelo {String(i + 1).padStart(2, "0")} {it.published ? <span className="ad-pill star">No catálogo</span> : <span className="ad-pill">Rascunho</span>}</span>
+                  {it.published
+                    ? <button className="ad-btn ghost sm" onClick={() => setPub(it, false)}>Retirar do catálogo</button>
+                    : <button className="ad-btn sm" onClick={() => confirm("Liberar esta arte no catálogo para todos os clientes?") && setPub(it, true)}>Liberar no catálogo</button>}
                   <div className="ad-art-actions">
                     <button className="ad-btn ghost sm" onClick={() => setAdjusting(it)} disabled={!!busy}>Ajustar</button>
                     {type?.kind === "mug" && <button className="ad-btn ghost sm" onClick={() => setSpin({ it, n: i + 1 })} disabled={!!busy}>🎬 Animação</button>}
@@ -331,7 +340,7 @@ function GalleryEditor({ g, types, bg, setToast, onBack, onSaved }) {
             <h2>{form.title}</h2>
             {form.description && <p className="ad-muted">{form.description}</p>}
             {form.note && <p className="ad-note">{form.note}</p>}
-            <div className="art-grid">{items.map((it, i) => <figure key={it.id}><img src={it.thumb || it.mockup} alt="" loading="lazy" /><figcaption>Modelo {String(i + 1).padStart(2, "0")}</figcaption></figure>)}</div>
+            <div className="art-grid">{items.filter((x) => x.published).map((it, i) => <figure key={it.id}><img src={it.thumb || it.mockup} alt="" loading="lazy" /><figcaption>Modelo {String(i + 1).padStart(2, "0")}</figcaption></figure>)}</div>
             <div className="ad-row end"><button className="ad-btn" onClick={() => setPreview(false)}>Fechar</button></div>
           </div>
         </div>

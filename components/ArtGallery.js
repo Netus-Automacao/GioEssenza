@@ -53,7 +53,7 @@ export default function ArtGallery({ galleryId, initial, total, pageSize, mark =
       if (!e.isIntersecting || loading) return;
       setLoading(true);
       const from = items.length;
-      const { data } = await supabase.from("art_items").select("id,thumb,mockup").eq("gallery_id", galleryId)
+      const { data } = await supabase.from("art_items").select("id,thumb,mockup").eq("gallery_id", galleryId).eq("published", true)
         .order("position").order("created_at").range(from, from + pageSize - 1);
       setItems((x) => [...x, ...(data || []).filter((d) => !x.some((y) => y.id === d.id))]);
       setLoading(false);
