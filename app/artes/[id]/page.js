@@ -21,7 +21,7 @@ export default async function Page({ params }) {
         <h1 className="sec-title">{g.title}</h1>
         {g.description && <p className="arts-lead">{g.description}</p>}
         {g.note && <p className="art-note">{g.note}</p>}
-        <ArtGallery galleryId={g.id} initial={g.items} total={g.total} pageSize={ART_PAGE} />
+        <ArtGallery galleryId={g.id} initial={g.items} total={g.total} pageSize={ART_PAGE} mark={s.arts?.watermark || s.name || ""} />
         {wa && <p className="center" style={{ marginTop: "2rem" }}><a className="btn" href={wa} target="_blank" rel="noreferrer">Escolhi meu modelo — falar no WhatsApp</a></p>}
       </section>
     </main>

@@ -66,6 +66,8 @@ export default function Arts({ settings, saveSettings, setToast }) {
       <Card title="No catálogo" desc="A aba aparece junto das categorias. Só galerias publicadas ficam visíveis para os clientes.">
         <Toggle label="Mostrar “Artes disponíveis” no catálogo" checked={!!arts.enabled} onChange={(v) => saveSettings({ ...settings, arts: { ...arts, enabled: v } })} />
         <TabTitle value={arts.title || "Artes disponíveis"} save={(title) => saveSettings({ ...settings, arts: { ...arts, title } })} />
+        <TabTitle label="Marca d'água nas imagens baixadas" hint="Aparece em mosaico, bem clarinha, só quando o cliente toca em “Salvar imagem”. No catálogo as artes ficam sem marca."
+          value={arts.watermark || settings.name || ""} save={(watermark) => saveSettings({ ...settings, arts: { ...arts, watermark } })} />
         <p className={arts.enabled ? "ad-muted" : "ad-alert"} style={{ margin: 0 }}>{arts.enabled ? "✔ A aba aparece no catálogo, ao lado das categorias." : "A aba está escondida no catálogo. Ligue a opção acima para mostrar."}</p>
       </Card>
       <Card title="Galerias" aside={<button className="ad-btn" onClick={create} disabled={missing}>+ Nova galeria</button>}>
@@ -96,14 +98,14 @@ export default function Arts({ settings, saveSettings, setToast }) {
 }
 
 // nome da aba com botão próprio (antes salvava sozinho ao sair do campo e podia desfazer o botão de mostrar)
-function TabTitle({ value, save }) {
+function TabTitle({ value, save, label = "Nome da aba", hint }) {
   const [v, setV] = useState(value);
   useEffect(() => setV(value), [value]);
   return (
-    <Field label="Nome da aba">
+    <Field label={label} hint={hint}>
       <div style={{ display: "flex", gap: ".5rem" }}>
         <input value={v} maxLength={40} onChange={(e) => setV(e.target.value)} style={{ flex: 1 }} />
-        {v.trim() && v !== value && <button type="button" className="ad-btn sm" onClick={() => save(v.trim())}>Salvar nome</button>}
+        {v.trim() && v !== value && <button type="button" className="ad-btn sm" onClick={() => save(v.trim())}>Salvar</button>}
       </div>
     </Field>
   );
