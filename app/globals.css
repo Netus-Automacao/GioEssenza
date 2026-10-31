@@ -691,3 +691,9 @@ button,input,select,textarea{font:inherit;color:inherit}
 
 /* proteção das fotos: sem menu de salvar no toque longo, sem arrastar, sem seleção */
 .cat img{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;-webkit-user-drag:none}
+
+/* sem menu do toque longo em nenhuma parte (exceto campos de texto) */
+body{-webkit-touch-callout:none}
+img,canvas,video,input[type=range]{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+input,textarea,[contenteditable=true]{-webkit-touch-callout:default;-webkit-user-select:text;user-select:text}
+input[type=range]{touch-action:pan-y}
